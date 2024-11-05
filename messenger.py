@@ -19,42 +19,39 @@ server = {
     ]
 }
 
-def options():
-    print('x. Main Menu')
-    print('n. Create user')
-    choice = input('Select an option : ')
-    if choice == 'x':
-        main_menu()
-    elif choice == 'n':
-        create_user()
-    else :
-        print('Unknown option :', choice)
-
 def main_menu():
-    print('1. See users')
-    print('2. See channels')
+    print('a. See users')
+    print('b. See channels')
     choice = input('Select an option : ')
-    if choice == '1' :
+    if choice == 'a':
         see_users()
-    elif choice == '2' :
+    elif choice == 'b':
         see_channels()
     else :
-        print('Unknown option :', choice)
+        print('Unknown option : ', choice)
 
 def see_users():
     for i in range(len(server['users'])):
         print(i+1, '. ', server['users'][i]['name'], '\n')
-    options()
+    print('a. Create user')
+    print('b. Back to main menu')
+    choice = input('Select an option : ')
+    if choice == 'a' :
+        create_user()
+    elif choice == 'b' :
+        main_menu()
+    else :
+        print('Unknown option : ', choice)
 
-def id_to_name(k):
+def id_to_name(str, k):
     L = []
-    for user in server['users']:
-        if user['id'] == k :
-            L.append(user['name'])
+    for object in server[str]:
+        if object['id'] == k :
+            L.append(object['name'])
     if len(L) == 0 :
         print('No such user')
     elif len(L) > 2 :
-        print('Error : 2 users for id {k}')
+        print('Error : 2 users for id {}'.format(k))
     else :
         return L[0]
 
@@ -62,22 +59,40 @@ def see_channels():
     for ch in server['channels']:
         names = ''
         for j in ch['member_ids']:
-            username = id_to_name(j)
+            username = id_to_name('users', j)
             names = names + username + ', '
         names = names[:-2] + '.'
         print(ch['id'],'. ', ch['name'], names, '\n')
-    options()
+    print('a. See messages')
+    print('b. Back to main menu')
+    choice = input('Select an option : ')
+    if choice == 'a' :
+        channel_id = input('Channel id : ')
+        see_messages(int(channel_id))
+    elif choice == 'b' :
+        main_menu()
+    else :
+        print('Unknown option : ', choice)
 
 def create_user():
     name = input('Name : ')
     d = {'id' : len(server['users'])+1, 'name' : name}
     server['users'].append(d)
     print('New user created : ', d['id'], '. ', name)
-    options()
+    print('a. See users')
+    print('b. Back to main menu')
+    choice = input('Select an option : ')
+    if choice == 'a' :
+        see_users()
 
-
+def see_messages(k):
+    L = [m for m in server['messages'] if m['channel'] == k]
+    print('Channel {} : '.format(k), id_to_name('channels', k))
+    for m in L :
+        user = id_to_name('users', m['sender_id'])
+        print('(', m['reception_date'], ') - ', user, ' : ',  m['content'])
 
 
 
 print('=== Messenger ===')
-options()
+main_menu()
