@@ -19,6 +19,19 @@ server = {
     ]
 }
 
+def id_to_name(str, k):
+    L = []
+    for object in server[str]:
+        if object['id'] == k :
+            L.append(object['name'])
+    if len(L) == 0 :
+        print('No such user')
+    elif len(L) > 2 :
+        print(f'Error : 2 users for id {k}')
+    else :
+        return L[0]
+
+
 def main_menu():
     print('\n')
     print('a. See users')
@@ -31,11 +44,16 @@ def main_menu():
     elif choice == 'b':
         see_channels()
     elif choice == 'c':
-        print('Bye !')
+        print('\nBye !\n')
         return None
     else :
         print(f'Unknown option : {choice}')
-        main_menu()
+
+def premier_indice(L,e) :
+    for i in range(len(L)) :
+        if L[i] == e :
+            return i
+
 
 def see_users():
     print('\n')
@@ -52,18 +70,6 @@ def see_users():
     else :
         print(f'Unknown option : {choice}')
         main_menu()
-
-def id_to_name(str, k):
-    L = []
-    for object in server[str]:
-        if object['id'] == k :
-            L.append(object['name'])
-    if len(L) == 0 :
-        print('No such user')
-    elif len(L) > 2 :
-        print(f'Error : 2 users for id {k}')
-    else :
-        return L[0]
 
 def see_channels():
     print('\n')
@@ -99,9 +105,9 @@ def see_channels():
 def create_user():
     name = input('Name : ')
     id = max(user['id'] for user in server['users']) + 1
-    d = {'id' : id, 'name' : name}
-    server['users'].append(d)
-    print('New user created : ', d['id'], '. ', name, '\n')
+    user = {'id' : id, 'name' : name}
+    server['users'].append(user)
+    print('New user created : ', user['id'], '. ', name, '\n')
     print('a. See users')
     print('b. Back to main menu')
     print('\n')
@@ -157,11 +163,6 @@ def add_user():
         server['channels'][ch_id-1]['member_ids'].append(user_id)
         print(f'User {user_id} has been added to channel {ch_id}')
     see_channels()
-
-def premier_indice(L,e) :
-    for i in range(len(L)) :
-        if L[i] == e :
-            return i
 
 def remove_user():
     ch_id = int(input('From which channel ? \n'))
