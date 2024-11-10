@@ -56,8 +56,8 @@ def main_menu():
 
 def see_users():
     print('\n')
-    for i in range(len(server['users'])):
-        print(i+1, '. ', server['users'][i]['name'], '\n')
+    for user in server['users']:
+        print(user['id'], '. ', user['name'], '\n')
     print('a. Create user')
     print('b. Back to main menu')
     print('\n')
