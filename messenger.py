@@ -6,23 +6,23 @@ with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'r') as f :
 
 # Fonctions annexes
 
-def id_to_name(str, k):
+def id_to_object(str, id):
     L = []
     for object in server[str]:
-        if object['id'] == k :
-            L.append(object['name'])
+        if object['id'] == id :
+            L.append(object)
     if len(L) == 0 :
         print('No such id')
     elif len(L) > 2 :
-        print(f'Error : 2 names for id {k}')
+        print(f'Error : 2 names for id {id}')
     else :
         return L[0]
 
-def name_to_id(str, name) :
+def name_to_object(str, name) :
     L = []
     for object in server[str]:
         if object['name'] == name :
-            L.append(object['id'])
+            L.append(object)
     if len(L) == 0 :
         print('No such name')
     elif len(L) > 2 :
@@ -117,13 +117,13 @@ def see_users():
 
 def see_channels():
     print('\n')
-    for ch in server['channels']:
+    for channel in server['channels']:
         names = ''
-        for j in ch['member_ids']:
-            username = id_to_name('users', j)
+        for member in channel['member_ids']:
+            username = id_to_object('users', member)['name']
             names = names + username + ', '
         names = names[:-2] + '.'
-        print(ch['id'],'. ', ch['name'], ' : ', names, '\n')
+        print(channel['id'],'. ', channel['name'], ' : ', names, '\n')
     print('a. See messages')
     print('b. Create new channel')
     print('c. Add user to channel')
@@ -147,6 +147,7 @@ def see_channels():
         main_menu()
 
 def new_id(str):
+    """ Id for new user or new channel """
     return max(stuff['id'] for stuff in server[str]) + 1
 
 def create_user():
@@ -167,12 +168,12 @@ def create_user():
         print(f'Unknown option : {choice}')
         main_menu()
 
-def see_messages(k):
-    L = [m for m in server['messages'] if m['channel'] == k]
-    print('Channel ', k, ' : ', id_to_name('channels', k), '\n')
-    for m in L :
-        user = id_to_name('users', m['sender_id'])
-        print(f'({m["reception_date"]}) - {user} : {m["content"]}')
+def see_messages(channel_id):
+    messages = [message for message in server['messages'] if message['channel'] == channel_id]
+    print(f'Channel {channel_id} : {id_to_object("channels", channel_id)["name"]}\n')
+    for message in messages :
+        user = id_to_object('users', message['sender_id'])['name']
+        print(f'({message["reception_date"]}) - {user} : {message["content"]}')
     print('\n')
     print('a. See channels')
     print('b. Write a message')
@@ -182,50 +183,51 @@ def see_messages(k):
     if choice == 'a' :
         see_users()
     elif choice == 'b' :
-        write_message(k)
+        write_message(channel_id)
     elif choice == 'c' :
         main_menu()
     else :
         print(f'Unknown option : {choice}')
         main_menu()
-    1  
 
 def create_channel():
-    ch = {'id' : new_id('channels'), 'member_ids' : []}
-    ch['name'] = input('Channel name : ')
+    channel = {'id' : new_id('channels'), 'member_ids' : []}
+    channel['name'] = input('Channel name : ')
     choice = '0'
     while choice != 'n' :
         choice = input('Do you want ot add a new user to this channel ? (y/n) \n')
         if choice == 'y':
             user_id = int(input('User Id : '))
-            ch['member_ids'].append(user_id)
+            channel['member_ids'].append(user_id)
         elif choice != 'n':
             print(f'Unknown option : {choice}')
             main_menu()
-    server['channels'].append(ch)
+    server['channels'].append(channel)
     print('New channel created')
     save()
     see_channels()
 
 def add_user():
-    ch_id = int(input('To which channel ? \n'))
+    channel_id = int(input('To which channel ? \n'))
+    channel = id_to_object('channels', channel_id)
     user_id = int(input('User Id ? \n'))
-    if user_id in server['channels'][ch_id-1]['member_ids'] :
-        print(f'User {user_id} is already in channel {ch_id}')
+    if user_id in channel['member_ids'] :
+        print(f'User {user_id} is already in channel {channel_id}')
     else :
-        server['channels'][ch_id-1]['member_ids'].append(user_id)
-        print(f'User {user_id} has been added to channel {ch_id}')
+        channel['member_ids'].append(user_id)
+        print(f'User {user_id} has been added to channel {channel_id}')
     save()
     see_channels()
 
 def remove_user():
-    ch_id = int(input('From which channel ? \n'))
+    channel_id = int(input('From which channel ? \n'))
+    channel = id_to_object('channels', channel_id)
     user_id = int(input('User Id ? \n'))
-    if user_id not in server['channels'][ch_id-1]['member_ids'] :
-        print(f'User {user_id} is not in channel {ch_id}')
+    if user_id not in channel['member_ids'] :
+        print(f'User {user_id} is not in channel {channel_id}')
     else :
-        server['channels'][ch_id-1]['member_ids'].pop(premier_indice(server['channels'][ch_id-1]['member_ids'], user_id))
-        print(f'User {user_id} has been removed from channel {ch_id}')
+        channel['member_ids'].pop(premier_indice(channel['member_ids'], user_id))
+        print(f'User {user_id} has been removed from channel {channel_id}')
     save()
     see_channels()
 
@@ -233,28 +235,28 @@ def save():
     with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
             json.dump(server, f)
 
-def write_message(k) :
-    print(f'Message to channel {k} : {id_to_name("channels",k)} \n')
+def write_message(channel_id) :
+    print(f'Message to channel {channel_id} : {id_to_object("channels", channel_id)["name"]} \n')
     name = input('Who writes ? \n')
-    user_id = name_to_id('users', name)
+    user_id = name_to_object('users', name)['id']
     for channel in server['channels'] :
-        if channel['id'] == k :
+        if channel['id'] == channel_id :
             ch = channel
-    if user_id not in ch['member_ids'] :
-        print(f'User {name} is not in channel {ch["id"]} : {ch["name"]}.')
+    if user_id not in channel['member_ids'] :
+        print(f'User {name} is not in channel {channel["id"]} : {channel["name"]}.')
         choice = input('Do you want to add a new user to this channel ? (y/n)\n')
         if choice == 'y' :
             add_user()
         elif choice == 'n' :
-            see_messages(k)
+            see_messages(channel_id)
         else :
             print(f'Unknown option : {choice}')
             main_menu()
     else :
         message = input('Message : ')
-        server['messages'].append({'id' : new_id('messages'), 'reception_date' : str(datetime.now()).split('.')[0], 'sender_id' : name_to_id('users', name), 'channel' : k, 'content' : message})
+        server['messages'].append({'id' : new_id('messages'), 'reception_date' : str(datetime.now()).split('.')[0], 'sender_id' : name_to_object('users', name)['id'], 'channel' : channel_id, 'content' : message})
         save()
-        see_messages(k)
+        see_messages(channel_id)
 
 
 print('=== Messenger ===')
