@@ -37,6 +37,51 @@ def premier_indice(L,e) :
 
 # Fonctionnalités de Messenger
 
+#current_user = {}
+
+# def login():
+#     user_id = input('Please enter user id : \n')
+#     L = []
+#     for user in server['users'] :
+#         if user['id'] == user_id :
+#             L.append(user)
+#     if len(L) == 0 :
+#         print('No such user')
+#         choice = ('Do you want to create a new user ? (y/n)')
+#         if choice == 'y' :
+#             create_user()
+#         elif choice == 'n' :
+#             login()
+#         else : 
+#             print(f'Unknown option : {choice}')
+#             print('a. Retry to login')
+#             print('b. Leave \n')
+#             choice = input('Select an option : \n')
+#             if choice == 'a' :
+#                 login()
+#             elif choice == 'b' :
+#                 print('\nBye !\n')
+#             else :
+#                 print(f'Unknown option : {choice}')
+#     else :
+#         password = input('Please enter password : \n')
+#         user = L[0]
+#         if password == user['password'] :
+#             print(f'\nWelcome {user["name"]} !')
+#             current_user = user
+#         else :
+#             print('Incorrect password \n')
+#             print('a. Retry to login')
+#             print('b. Leave \n')
+#             choice = input('Select an option : \n')
+#             if choice == 'a' :
+#                 login()
+#             elif choice == 'b' :
+#                 print('\nBye !\n')
+#             else :
+#                 print(f'Unknown option : {choice}')
+
+
 def main_menu():
     print('\n')
     print('a. See users')
