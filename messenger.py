@@ -11,6 +11,7 @@ class User :
 
     def to_dict(self) :
         return {'id' : self.id, 'name' : self.name}
+
 class Channel :
     def __init__(self, id : int, name : str, member_ids : 'list[int]') :
         self.id = id
@@ -169,7 +170,7 @@ def premier_indice(L,e) :
 #                 print(f'Unknown option : {choice}')
 
 
-def main_menu():
+def main_menu(server = Server.load()):
     print('\n')
     print('a. See users')
     print('b. See channels')
@@ -182,7 +183,7 @@ def main_menu():
         see_channels()
     elif choice == 'c':
         print('\nBye !\n')
-        save()
+        save(server)
     else :
         print(f'Unknown option : {choice}')
 
@@ -238,7 +239,7 @@ def create_user(server = Server.load()):
     user = User(max(user.id for user in server.users) + 1, name)
     server.users.append(user)
     print(f'New user created : {user.id}. {name}\n')
-    save()
+    save(server)
     print('a. See users')
     print('b. Back to main menu')
     print('\n')
@@ -288,10 +289,10 @@ def create_channel(server = Server.load()):
     channel = Channel(max(channel.id for channel in server.channels) + 1, channel_name, member_ids)
     server.channels.append(channel)
     print('New channel created')
-    save()
+    save(server)
     see_channels()
 
-def add_user():
+def add_user(server = Server.load()):
     channel_id = int(input('To which channel ? \n'))
     channel = id_to_channel(channel_id)
     user_id = int(input('User Id ? \n'))
@@ -300,10 +301,10 @@ def add_user():
     else :
         channel.member_ids.append(user_id)
         print(f'User {user_id} has been added to channel {channel_id}')
-    save()
+    save(server)
     see_channels()
 
-def remove_user():
+def remove_user(server = Server.load()):
     channel_id = int(input('From which channel ? \n'))
     channel = id_to_channel(channel_id)
     user_id = int(input('User Id ? \n'))
@@ -312,10 +313,10 @@ def remove_user():
     else :
         channel.member_ids.pop(premier_indice(channel.member_ids, user_id))
         print(f'User {user_id} has been removed from channel {channel_id}')
-    save()
+    save(server)
     see_channels()
 
-def save(server = Server.load()):
+def save(server : Server):
     with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
             json.dump(server.to_dict(), f)
 
@@ -339,9 +340,13 @@ def write_message(channel_id, server = Server.load()) :
     else :
         message = input('Message : ')
         server.messages.append(Message(max(message.id for message in server.messages) + 1, str(datetime.now()).split('.')[0], name_to_user(name).id, channel_id, message))
-        save()
+        save(server)
         see_messages(channel_id)
 
+def test_save(server = Server.load()):
+    server.users.append(User(0, 'blabla'))
+    save(server)
+    print('Ok')
 
 print('=== Messenger ===')
 main_menu()
