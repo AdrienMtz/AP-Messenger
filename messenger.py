@@ -88,6 +88,69 @@ class Client :
     def __init__(self, server):
         self.server = server
 
+# Fonctions annexes
+
+    def id_to_user(self, id : 'int'):
+        server = self.server
+        L = []
+        for user in server.users:
+            if user.id == id :
+                L.append(user)
+        if len(L) == 0 :
+            print('No such id')
+        elif len(L) > 2 :
+            print(f'Error : 2 names for id {id}')
+        else :
+            return L[0]
+
+    def id_to_channel(self, id : 'int'):
+        server = self.server
+        L = []
+        for channel in server.channels:
+            if channel.id == id :
+                L.append(channel)
+        if len(L) == 0 :
+            print('No such id')
+        elif len(L) > 2 :
+            print(f'Error : 2 names for id {id}')
+        else :
+            return L[0]
+
+    def name_to_user(self, name : 'str') :
+        server = self.server
+        L = []
+        for user in server.users:
+            if user.name == name :
+                L.append(user)
+        if len(L) == 0 :
+            print('No such name')
+        elif len(L) > 2 :
+            print(f'Error : 2 ids for name {name}')
+        else :
+            return L[0]
+
+    def name_to_channel(self, name : 'str') :
+        server = self.server
+        L = []
+        for channel in server.channels:
+            if channel.name == name :
+                L.append(channel)
+        if len(L) == 0 :
+            print('No such name')
+        elif len(L) > 2 :
+            print(f'Error : 2 ids for name {name}')
+        else :
+            return L[0]
+
+    @staticmethod
+    def premier_indice(L : 'list', e) :
+        for i in range(len(L)) :
+            if L[i] == e :
+                return i
+
+
+# Fonctionnalités de Messenger
+
     def main_menu(self):
         print('\n')
         print('a. See users')
@@ -101,6 +164,7 @@ class Client :
             self.see_channels()
         elif choice == 'c':
             print('\nBye !\n')
+            self.server.save()
         else :
             print(f'Unknown option : {choice}')
 
@@ -127,7 +191,7 @@ class Client :
         for channel in server.channels:
             names = ''
             for member in channel.member_ids:
-                username = id_to_user(member).name
+                username = self.id_to_user(member).name
                 names = names + username + ', '
             names = names[:-2] + '.'
             print(f'{channel.id}. {channel.name} : {names}\n')
@@ -153,8 +217,8 @@ class Client :
             print(f'Unknown option : {choice}')
             self.main_menu()
 
-    def create_user():
-        server = Server.load()
+    def create_user(self):
+        server = self.server
         name = input('Name : ')
         user = User(max(user.id for user in server.users) + 1, name)
         server.users.append(user)
@@ -165,19 +229,19 @@ class Client :
         print('\n')
         choice = input('Select an option : ')
         if choice == 'a' :
-            see_users()
+            self.see_users()
         elif choice == 'b' :
-            main_menu()
+            self.main_menu()
         else :
             print(f'Unknown option : {choice}')
-            main_menu()
+            self.main_menu()
 
-    def see_messages(channel_id : 'int'):
-        server = Server.load()
+    def see_messages(channel_id : 'int', self):
+        server = self.server()
         messages = [message for message in server.messages if message.channel == channel_id]
-        print(f'Channel {channel_id} : {id_to_channel(channel_id).name}\n')
+        print(f'Channel {channel_id} : {self.id_to_channel(channel_id).name}\n')
         for message in messages :
-            user = id_to_user(message.sender_id).name
+            user = self.id_to_user(message.sender_id).name
             print(f'({message.reception_date}) - {user} : {message.content}')
         print('\n')
         print('a. See channels')
@@ -186,17 +250,17 @@ class Client :
         print('\n')
         choice  = input('Select an option  : ')
         if choice == 'a' :
-            see_users()
+            self.see_users()
         elif choice == 'b' :
-            write_message(channel_id)
+            self.write_message(channel_id)
         elif choice == 'c' :
-            main_menu()
+            self.main_menu()
         else :
             print(f'Unknown option : {choice}')
-            main_menu()
+            self.main_menu()
 
-    def create_channel():
-        server = Server.load()
+    def create_channel(self):
+        server = self.server
         channel_name = input('Channel name : ')
         member_ids = []
         choice = '0'
@@ -207,17 +271,17 @@ class Client :
                 member_ids.append(user_id)
             elif choice != 'n':
                 print(f'Unknown option : {choice}')
-                main_menu()
+                self.main_menu()
         channel = Channel(max(channel.id for channel in server.channels) + 1, channel_name, member_ids)
         server.channels.append(channel)
         print('New channel created')
         server.save()
-        see_channels()
+        self.see_channels()
 
-    def add_user():
-        server = Server.load()
+    def add_user(self):
+        server = self.server
         channel_id = int(input('To which channel ? \n'))
-        channel = id_to_channel(channel_id)
+        channel = self.id_to_channel(channel_id)
         user_id = int(input('User Id ? \n'))
         if user_id in channel.member_ids :
             print(f'User {user_id} is already in channel {channel_id}')
@@ -225,26 +289,26 @@ class Client :
             channel.member_ids.append(user_id)
             print(f'User {user_id} has been added to channel {channel_id}')
         server.save()
-        see_channels()
+        self.see_channels()
 
-    def remove_user():
-        server = Server.load()
+    def remove_user(self):
+        server = self.server
         channel_id = int(input('From which channel ? \n'))
-        channel = id_to_channel(channel_id)
+        channel = self.id_to_channel(channel_id)
         user_id = int(input('User Id ? \n'))
         if user_id not in channel.member_ids :
             print(f'User {user_id} is not in channel {channel_id}')
         else :
-            channel.member_ids.pop(premier_indice(channel.member_ids, user_id))
+            channel.member_ids.pop(self.premier_indice(channel.member_ids, user_id))
             print(f'User {user_id} has been removed from channel {channel_id}')
         server.save()
-        see_channels()
+        self.see_channels()
 
-    def write_message(channel_id : 'int') :
-        server = Server.load()
-        print(f'Message to channel {channel_id} : {id_to_channel(channel_id).name} \n')
+    def write_message(channel_id : 'int', self) :
+        server = self.server
+        print(f'Message to channel {channel_id} : {self.id_to_channel(channel_id).name} \n')
         name = input('Who writes ? \n')
-        user_id = name_to_user(name).id
+        user_id = self.name_to_user(name).id
         for channel in server.channels :
             if channel.id == channel_id :
                 ch = channel
@@ -252,127 +316,21 @@ class Client :
             print(f'User {name} is not in channel {channel.id} : {channel.name}.')
             choice = input('Do you want to add a new user to this channel ? (y/n)\n')
             if choice == 'y' :
-                add_user()
+                self.add_user()
             elif choice == 'n' :
-                see_messages(channel_id)
+                self.see_messages(channel_id)
             else :
                 print(f'Unknown option : {choice}')
-                main_menu()
+                self.main_menu()
         else :
             message = input('Message : ')
-            server.messages.append(Message(max(message.id for message in server.messages) + 1, str(datetime.now()).split('.')[0], name_to_user(name).id, channel_id, message))
+            server.messages.append(Message(max(message.id for message in server.messages) + 1, str(datetime.now()).split('.')[0], self.name_to_user(name).id, channel_id, message))
             server.save()
-            see_messages(channel_id)
-
-# Fonctions annexes
-
-def id_to_user(id : 'int'):
-    server = Server.load()
-    L = []
-    for user in server.users:
-        if user.id == id :
-           L.append(user)
-    if len(L) == 0 :
-        print('No such id')
-    elif len(L) > 2 :
-        print(f'Error : 2 names for id {id}')
-    else :
-        return L[0]
-
-def id_to_channel(id : 'int'):
-    server = Server.load()
-    L = []
-    for channel in server.channels:
-        if channel.id == id :
-           L.append(channel)
-    if len(L) == 0 :
-        print('No such id')
-    elif len(L) > 2 :
-        print(f'Error : 2 names for id {id}')
-    else :
-        return L[0]
-
-def name_to_user(name : 'str') :
-    server = Server.load()
-    L = []
-    for user in server.users:
-        if user.name == name :
-            L.append(user)
-    if len(L) == 0 :
-        print('No such name')
-    elif len(L) > 2 :
-        print(f'Error : 2 ids for name {name}')
-    else :
-        return L[0]
-
-def name_to_channel(name : 'str') :
-    server = Server.load()
-    L = []
-    for channel in server.channels:
-        if channel.name == name :
-            L.append(channel)
-    if len(L) == 0 :
-        print('No such name')
-    elif len(L) > 2 :
-        print(f'Error : 2 ids for name {name}')
-    else :
-        return L[0]
-
-def premier_indice(L : 'list', e) :
-    for i in range(len(L)) :
-        if L[i] == e :
-            return i
-
-
-# Fonctionnalités de Messenger
-
-#current_user = {}
-
-# def login():
-#     user_id = input('Please enter user id : \n')
-#     L = []
-#     for user in server['users'] :
-#         if user['id'] == user_id :
-#             L.append(user)
-#     if len(L) == 0 :
-#         print('No such user')
-#         choice = ('Do you want to create a new user ? (y/n)')
-#         if choice == 'y' :
-#             create_user()
-#         elif choice == 'n' :
-#             login()
-#         else : 
-#             print(f'Unknown option : {choice}')
-#             print('a. Retry to login')
-#             print('b. Leave \n')
-#             choice = input('Select an option : \n')
-#             if choice == 'a' :
-#                 login()
-#             elif choice == 'b' :
-#                 print('\nBye !\n')
-#             else :
-#                 print(f'Unknown option : {choice}')
-#     else :
-#         password = input('Please enter password : \n')
-#         user = L[0]
-#         if password == user['password'] :
-#             print(f'\nWelcome {user["name"]} !')
-#             current_user = user
-#         else :
-#             print('Incorrect password \n')
-#             print('a. Retry to login')
-#             print('b. Leave \n')
-#             choice = input('Select an option : \n')
-#             if choice == 'a' :
-#                 login()
-#             elif choice == 'b' :
-#                 print('\nBye !\n')
-#             else :
-#                 print(f'Unknown option : {choice}')
-
-
+            self.see_messages(channel_id)
 
 
 print('=== Messenger ===')
-main_menu()
+server = Server.load()
+client = Client(server)
+client.main_menu()
 
