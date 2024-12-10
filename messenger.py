@@ -8,6 +8,9 @@ class User :
     def __init__(self, id : int, name : str) :
         self.id = id
         self.name = name
+    
+    def __repr__(self):
+        return f'User({self.id}, {self.name})'
 
     def to_dict(self) :
         return {'id' : self.id, 'name' : self.name}
@@ -18,6 +21,9 @@ class Channel :
         self.name = name
         self.member_ids = member_ids
     
+    def __repr__(self):
+        return f'Channel({self.id}, {self.name}, {self.member_ids})'
+
     def to_dict(self) :
         return {'id' : self.id, 'name' : self.name, 'member_ids' : self.member_ids}
 
@@ -29,6 +35,9 @@ class Message  :
         self.channel = channel
         self.content = content
     
+    def __repr__(self):
+        return f'Message({self.id}, {self.reception_date}, {self.sender_id}, {self.channel}, {self.content})'
+
     def to_dict(self) :
         return {'id' : self.id, 'reception_date' : self.reception_date, 'sender_id' : self.sender_id, 'channel' : self.channel, 'content' : self.content}
 
@@ -38,10 +47,32 @@ class Server :
         self.channels = channels
         self.messages = messages
     
-    def load() :
-        with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'r') as f :
+    def __repr__(self) :
+        return f'Server(Users : {[(user.id, user.name) for user in self.users]}, Channels : {[(channel.id, channel.name) for channel in self.channels]}, Messages : {[(message.content, message.id) for message in self.messages]}'
+
+    @classmethod
+    def from_dict(cls, server_dict : 'dict'):
+        users = []
+        channels = []
+        messages = []
+        for user in server_dict['users'] :
+            users.append(User(user['id'], user['name']))
+        for channel in server_dict['channels'] :
+            channels.append(Channel(channel['id'], channel['name'], channel['member_ids']))
+        for message in server_dict['messages'] :
+            messages.append(Message(message['id'], message['reception_date'], message['sender_id'], message['channel'], message['content']))
+        server = cls(users, channels, messages)
+        return server
+
+    @classmethod
+    def load(cls, file = 'C:/Users/Adrien/UE12/AP/Server-Messenger.json') :
+        with open(file, 'r') as f :
             server = json.load(f)
-        return conversion_dico_to_class(server)
+        return cls.from_dict(server)
+    
+    def save(self):
+        with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
+            json.dump(self.to_dict(), f)
     
     def to_dict(self) :
         server = {'users' : [], 'channels' : [], 'messages' : []}
@@ -52,24 +83,12 @@ class Server :
         for message in self.messages :
             server['messages'].append(message.to_dict())
         return server
-
-def conversion_dico_to_class(server_dict) :
-    users = []
-    channels = []
-    messages = []
-    for user in server_dict['users'] :
-        users.append(User(user['id'], user['name']))
-    for channel in server_dict['channels'] :
-        channels.append(Channel(channel['id'], channel['name'], channel['member_ids']))
-    for message in server_dict['messages'] :
-        messages.append(Message(message['id'], message['reception_date'], message['sender_id'], message['channel'], message['content']))
-    server = Server(users, channels, messages)
-    return server
-
+    
 
 # Fonctions annexes
 
-def id_to_user(id, server = Server.load()):
+def id_to_user(id : 'int'):
+    server = Server.load()
     L = []
     for user in server.users:
         if user.id == id :
@@ -81,7 +100,8 @@ def id_to_user(id, server = Server.load()):
     else :
         return L[0]
 
-def id_to_channel(id, server = Server.load()):
+def id_to_channel(id : 'int'):
+    server = Server.load()
     L = []
     for channel in server.channels:
         if channel.id == id :
@@ -93,7 +113,8 @@ def id_to_channel(id, server = Server.load()):
     else :
         return L[0]
 
-def name_to_user(name, server = Server.load()) :
+def name_to_user(name : 'str') :
+    server = Server.load()
     L = []
     for user in server.users:
         if user.name == name :
@@ -105,7 +126,8 @@ def name_to_user(name, server = Server.load()) :
     else :
         return L[0]
 
-def name_to_channel(name, server = Server.load()) :
+def name_to_channel(name : 'str') :
+    server = Server.load()
     L = []
     for channel in server.channels:
         if channel.name == name :
@@ -117,7 +139,7 @@ def name_to_channel(name, server = Server.load()) :
     else :
         return L[0]
 
-def premier_indice(L,e) :
+def premier_indice(L : 'list', e) :
     for i in range(len(L)) :
         if L[i] == e :
             return i
@@ -171,6 +193,7 @@ def premier_indice(L,e) :
 
 
 def main_menu(server = Server.load()):
+    server = Server.load()
     print('\n')
     print('a. See users')
     print('b. See channels')
@@ -183,11 +206,12 @@ def main_menu(server = Server.load()):
         see_channels()
     elif choice == 'c':
         print('\nBye !\n')
-        save(server)
+        server.save()
     else :
         print(f'Unknown option : {choice}')
 
 def see_users(server = Server.load()):
+    server = Server.load()
     print('\n')
     for user in server.users:
         print(f'{user.id}. {user.name}\n')
@@ -204,6 +228,7 @@ def see_users(server = Server.load()):
         main_menu()
 
 def see_channels(server = Server.load()):
+    server = Server.load()
     print('\n')
     for channel in server.channels:
         names = ''
@@ -235,11 +260,12 @@ def see_channels(server = Server.load()):
         main_menu()
 
 def create_user(server = Server.load()):
+    server = Server.load()
     name = input('Name : ')
     user = User(max(user.id for user in server.users) + 1, name)
     server.users.append(user)
     print(f'New user created : {user.id}. {name}\n')
-    save(server)
+    server.save()
     print('a. See users')
     print('b. Back to main menu')
     print('\n')
@@ -252,7 +278,8 @@ def create_user(server = Server.load()):
         print(f'Unknown option : {choice}')
         main_menu()
 
-def see_messages(channel_id, server = Server.load()):
+def see_messages(channel_id : 'int'):
+    server = Server.load()
     messages = [message for message in server.messages if message.channel == channel_id]
     print(f'Channel {channel_id} : {id_to_channel(channel_id).name}\n')
     for message in messages :
@@ -275,6 +302,7 @@ def see_messages(channel_id, server = Server.load()):
         main_menu()
 
 def create_channel(server = Server.load()):
+    server = Server.load()
     channel_name = input('Channel name : ')
     member_ids = []
     choice = '0'
@@ -289,10 +317,11 @@ def create_channel(server = Server.load()):
     channel = Channel(max(channel.id for channel in server.channels) + 1, channel_name, member_ids)
     server.channels.append(channel)
     print('New channel created')
-    save(server)
+    server.save()
     see_channels()
 
 def add_user(server = Server.load()):
+    server = Server.load()
     channel_id = int(input('To which channel ? \n'))
     channel = id_to_channel(channel_id)
     user_id = int(input('User Id ? \n'))
@@ -301,10 +330,11 @@ def add_user(server = Server.load()):
     else :
         channel.member_ids.append(user_id)
         print(f'User {user_id} has been added to channel {channel_id}')
-    save(server)
+    server.save()
     see_channels()
 
 def remove_user(server = Server.load()):
+    server = Server.load()
     channel_id = int(input('From which channel ? \n'))
     channel = id_to_channel(channel_id)
     user_id = int(input('User Id ? \n'))
@@ -313,14 +343,11 @@ def remove_user(server = Server.load()):
     else :
         channel.member_ids.pop(premier_indice(channel.member_ids, user_id))
         print(f'User {user_id} has been removed from channel {channel_id}')
-    save(server)
+    server.save()
     see_channels()
 
-def save(server : Server):
-    with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
-            json.dump(server.to_dict(), f)
-
-def write_message(channel_id, server = Server.load()) :
+def write_message(channel_id : 'int') :
+    server = Server.load()
     print(f'Message to channel {channel_id} : {id_to_channel(channel_id).name} \n')
     name = input('Who writes ? \n')
     user_id = name_to_user(name).id
@@ -340,13 +367,8 @@ def write_message(channel_id, server = Server.load()) :
     else :
         message = input('Message : ')
         server.messages.append(Message(max(message.id for message in server.messages) + 1, str(datetime.now()).split('.')[0], name_to_user(name).id, channel_id, message))
-        save(server)
+        server.save()
         see_messages(channel_id)
-
-def test_save(server = Server.load()):
-    server.users.append(User(0, 'blabla'))
-    save(server)
-    print('Ok')
 
 print('=== Messenger ===')
 main_menu()
