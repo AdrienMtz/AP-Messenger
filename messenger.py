@@ -192,7 +192,7 @@ class Client :
             self.server.save()
         else :
             print(f'Unknown option : {choice} \n')
-            input('Press any key to go to main menu.')
+            input('Press <Enter> to go to main menu.')
             self.main_menu()
 
     def see_users(self) :
@@ -214,7 +214,7 @@ class Client :
             self.main_menu()
         else :
             print(f'Unknown option : {choice} \n')
-            input('Press any key to go to main menu.')
+            input('Press <Enter> to go to main menu.')
             self.main_menu()
 
     def see_channels(self) :
@@ -222,10 +222,17 @@ class Client :
         server = self.server
         print('\n')
         for channel in server.channels :
-            names = ''
-            for member in channel.member_ids :
-                username = server.id_to_user(member).name
-                names = names + username + ', '
+            if len(channel.member_ids) == 0 :
+                print(f'No user in channel {channel.id}. {channel.name}. Please delete this channel. \n')
+                input('Press <Enter> to go to main menu.')
+                self.main_menu()
+                return None
+            else : 
+                names = ''
+                for member_id in channel.member_ids :
+                    user = server.id_to_user(member_id)
+                    username = user.name
+                    names = names + username + ', '
             names = names[ :-2] + '.'
             print(f'{channel.id}. {channel.name} : {names}\n')
         print('a. See messages')
@@ -240,10 +247,10 @@ class Client :
             channel_id = int(input('\nChannel id : '))
             if channel_id not in [channel.id for channel in server.channels] :
                 print('\nNo such channel. \n')
-                input('Press any key to see channels.')
+                input('Press <Enter> to see channels.')
                 self.see_channels()
             else :
-                self.see_messages(int(channel_id))
+                self.see_messages(channel_id)
         elif choice == 'b' :
             self.create_channel()
         elif choice == 'c' :
@@ -256,7 +263,7 @@ class Client :
             self.main_menu()
         else :
             print(f'\nUnknown option : {choice} \n')
-            input('Press any key to go to main menu.')
+            input('Press <Enter> to go to main menu.')
             self.main_menu()
 
     def create_user(self) :
@@ -277,7 +284,7 @@ class Client :
             self.main_menu()
         else :
             print(f'Unknown option : {choice} \n')
-            input('Press any key to go to main menu.')
+            input('Press <Enter> to go to main menu.')
             self.main_menu()
 
     def delete_user(self) :
@@ -285,9 +292,9 @@ class Client :
         server = self.server
         user_id = int(input('Which user do you want to delete ? (id) \n'))
         if user_id not in [user.id for user in server.users] :
-                print('No such user.')
-                input('Press any key to see users.')
-                self.see_users()
+            print('\nNo such user. \n')
+            input('Press <Enter> to see users.')
+            self.see_users()
         else :
             user = server.id_to_user(user_id)
             choice = input(f'\nUser {user.id}. {user.name} will be deleted. Confirm ? (y/n) \n')
@@ -298,25 +305,33 @@ class Client :
                 for channel in server.channels :
                     if user.id in channel.member_ids :
                         channel.member_ids.pop(self.premier_indice(channel.member_ids, user.id))
+                messages2 = []
                 for message in server.messages :
-                    if message.sender_id == user.id :
-                        server.messages.pop(self.premier_indice(server.messages, message))
+                    if message.sender_id != user.id :
+                        messages2.append(message)
+                server.messages = messages2
                 self.clear_screen()
                 print(f'\nUser {user_id}. {user.name} deleted successfully. \n')
             elif choice != 'n' :
                 print(f'Unknown choice : {choice} \n')
-            input('Press any key to see users.')
+            input('Press <Enter> to see users.')
             self.see_users()
 
     def see_messages(self, channel_id : 'int') :
         self.clear_screen()
         server = self.server
-        messages = [message for message in server.messages if message.channel == channel_id]
-        print(f'Channel {channel_id} : {server.id_to_channel(channel_id).name} \n')
-        print(f'Members : {self.list_to_str([server.id_to_user(member_id).name for member_id in server.id_to_channel(channel_id).member_ids])} \n')
+        channel = server.id_to_channel(channel_id) # Vérifié par see_channels
+        if len(channel.member_ids) == 0 :
+            print(f'No user in channel {channel.id}. {channel.name}. Please delete this channel. \n')
+            input('Press <Enter> to go to main menu.')
+            self.main_menu()
+            return None
+        messages = [message for message in server.messages if message.channel == channel.id]
+        print(f'Channel {channel.id} : {channel.name} \n')
+        print(f'Members : {self.list_to_str([server.id_to_user(member_id).name for member_id in channel.member_ids])} \n')
         for message in messages :
-            user = server.id_to_user(message.sender_id).name
-            print(f'({message.reception_date}) - {user} : {message.content}')
+            user = server.id_to_user(message.sender_id)
+            print(f'({message.reception_date}) - {user.name} : {message.content}')
         print('\n')
         print('a. See channels')
         print('b. Write a message')
@@ -326,12 +341,12 @@ class Client :
         if choice == 'a' :
             self.see_users()
         elif choice == 'b' :
-            self.write_message(channel_id)
+            self.write_message(channel.id)
         elif choice == 'c' :
             self.main_menu()
         else :
             print(f'Unknown option : {choice} \n')
-            input('Press any key to go to main menu.')
+            input('Press <Enter> to go to main menu.')
             self.main_menu()
 
     def create_channel(self) :
@@ -340,55 +355,64 @@ class Client :
         channel_name = input('Channel name : ')
         member_ids = []
         choice = '0'
+        size = 0
+        names = []
         while choice != 'n' :
-            choice = input('Do you want ot add a new user to this channel ? (y/n) \n')
+            choice = input('\nDo you want to add a new user to this channel ? (y/n) \n')
             if choice == 'y' :
-                user_id = int(input('User Id : \n'))
+                user_id = int(input('\nUser Id : \n'))
                 if user_id not in [user.id for user in server.users] :
                     print('No such user.')
                     answer = input('Create new user ? (y/n) \n')
                     if answer == 'y' :
                         self.create_user()
-                    elif answer == 'n' :
-                        self.create_channel()
-                    else :
+                    elif answer != 'n' :
                         print(f'Unknown option : {answer} \n')
-                        input('Press any key to go to main menu.')
-                        self.main_menu()
                 member_ids.append(user_id)
-            elif choice != 'n' :
+                names.append(server.id_to_user(user_id).name)
+                size += 1
+            elif choice == 'n' :
+                if size > 0:
+                    break
+                else :
+                    print('\nPlease add a user to this channel.')
+            else :
                 print(f'Unknown option : {choice} \n')
-                input('Press any key to go to main menu.')
-                self.main_menu()
         channel = Channel(max(channel.id for channel in server.channels) + 1, channel_name, member_ids)
         server.channels.append(channel)
-        print('New channel created. \n')
-        input('Press any key to see channels.')
+        
+        print(f'\nNew channel created : \n{channel.id}. {channel.name} : {self.list_to_str(names)} \n')  
+        input('Press <Enter> to see channels.')
         server.save()
         self.see_channels()
 
-    def delete_channel(self) :
+    def delete_channel(self, channel : 'Channel' = None, automatic : 'bool'= False) :
         self.clear_screen()
         server = self.server
-        channel_id = int(input('Which channel do you want to delete ? (id) \n'))
-        if channel_id not in [channel.id for channel in server.channels] :
-                print('No such channel.')
-                input('Press any key to see channels.')
-                self.see_channels()
-        else :
-            channel = server.id_to_channel(channel_id)
-            choice = input(f'Channel {channel.id}. {channel.name} will be deleted. Confirm ? (y/n) \n')
-            if choice == 'y' :
-                channel_index = self.premier_indice(server.channels, channel)
-                server.channels.pop(channel_index)
-                for message in server.messages :
-                    if message.channel == channel.id :
-                        server.messages.pop(self.premier_indice(server.messages, message))
-                server.save()
-                print(f'Channel {channel_id} deleted successfully. \n')
-            elif choice != 'n' :
-                print(f'Unknown choice: {choice} \n')
-            input('Press any key to see channels.')
+        choice = 'y'
+        if not automatic :
+            channel_id = int(input('Which channel do you want to delete ? (id) \n'))
+            if channel_id not in [channel.id for channel in server.channels] :
+                    print('No such channel.')
+                    input('Press <Enter> to see channels.')
+                    self.see_channels()
+            else :
+                channel = server.id_to_channel(channel_id)
+                choice = input(f'\nChannel {channel.id}. {channel.name} will be deleted. Confirm ? (y/n) \n')
+        if choice == 'y' :
+            channel_index = self.premier_indice(server.channels, channel)
+            server.channels.pop(channel_index)
+            messages2 = []
+            for message in server.messages :
+                if message.channel != channel.id :
+                    messages2.append(message)
+            server.messages = messages2 
+            server.save()
+            print(f'\nChannel {channel.id} deleted successfully. \n')
+        elif choice != 'n' :
+            print(f'Unknown choice: {choice} \n')
+        if not automatic :
+            input('Press <Enter> to see channels.')
             self.see_channels()
 
     def add_user(self, user_id = None) :
@@ -404,45 +428,71 @@ class Client :
                         self.add_user()
                     else :
                         print(f'Unknown option : {answer} \n')
-                        input('Press any key to add user.')
+                        input('Press <Enter> to add user.')
                         self.add_user()
         channel = server.id_to_channel(channel_id)
         if user_id == None :
             user_id = int(input('User Id ? \n'))
-        user = server.id_to_user(user_id)
-        if user_id in channel.member_ids :
-            print(f'User {user.id}. {user.name} is already in channel {channel.id}. {channel.name} \n')
+        if user_id not in [user.id for user in server.users] :
+            print('No such user.')
+            answer = input('Create new user ? (y/n) \n')
+            if answer == 'y' :
+                self.create_user()
+            else :
+                if answer != 'n' :
+                    print(f'Unknown option : {answer} \n')
+                input('Press <Enter> to see channels.')
+                self.see_channels()
         else :
-            channel.member_ids.append(user_id)
-            print(f'\nUser {user.id}. {user.name} has been added to channel {channel.id}. {channel.name} \n')
-        input('Press any key to see channels.')
-        server.save()
-        self.see_channels()
+            user = server.id_to_user(user_id)
+            if user_id in channel.member_ids :
+                print(f'User {user.id}. {user.name} is already in channel {channel.id}. {channel.name} \n')
+            else :
+                channel.member_ids.append(user_id)
+                print(f'\nUser {user.id}. {user.name} has been added to channel {channel.id}. {channel.name} \n')
+            input('Press <Enter> to see channels.')
+            server.save()
+            self.see_channels()
 
     def remove_user(self) :
         self.clear_screen()
         server = self.server
         channel_id = int(input('From which channel ? \n'))
-        channel = server.id_to_channel(channel_id)
-        user_id = int(input('User Id ? \n'))
-        user = server.id_to_user(user_id)
-        if user.id not in channel.member_ids :
-            print(f'User {user.id} is not in channel {channel.id}. \n')
+        if channel_id not in [channel.id for channel in server.channels] :
+            print('\nNo such channel. \n')
+            input('Press <Enter> to see channels.')
+            self.see_channels()
         else :
-            choice = input(f'User {user.id}. {user.name} will be removed from channel {channel.id}. {channel.name}. Confirm ? (y/n) \n')
-            if choice == 'y' :
-                channel.member_ids.pop(self.premier_indice(channel.member_ids, user.id))
-                print(f'\nUser {user.id} has been removed from channel {channel.id}. \n')
-            elif choice != 'n' :
-                print(f'\nUnknown option : {choice} \n')
-        server.save()
-        input('Press any key to see channels.')
-        self.see_channels()
+            channel = server.id_to_channel(channel_id)
+            user_id = int(input('\nUser Id ? \n'))
+            if user_id not in channel.member_ids :
+                print(f'User {user.id} is not in channel {channel.id}. \n')
+            else :
+                user = server.id_to_user(user_id)
+                choice = input(f'\nUser {user.id}. {user.name} will be removed from channel {channel.id}. {channel.name}. Confirm ? (y/n) \n')
+                if choice == 'y' :
+                    answer = '' # Permet de savoir s'il faut supprimer le channel.
+                    if len(channel.member_ids) == 1 :
+                        answer = input(f'\n Channel {channel.id}. {channel.name} will be deleted. Confirm ? (y/n) \n')
+                        if answer not in ['y', 'n'] :
+                            print(f'\nUnknown option : {answer} \n')
+                        if answer != 'y' :
+                            input('Press <Enter> to see channels.')
+                            self.see_channels()
+                    channel.member_ids.pop(self.premier_indice(channel.member_ids, user.id))
+                    print(f'\nUser {user.id} has been removed from channel {channel.id}. \n')
+                    if answer == 'y' :
+                        self.delete_channel(channel, automatic = True)
+                elif choice != 'n' :
+                    print(f'\nUnknown option : {choice} \n')
+            server.save()
+            input('Press <Enter> to see channels.')
+            self.see_channels()
 
     def write_message(self, channel_id : 'int') :
         self.clear_screen()
         server = self.server
-        channel = server.id_to_channel(channel_id)
+        channel = server.id_to_channel(channel_id) # Vérifié par see_messages()
         print(f'Message to channel {channel.id} : {channel.name} \n')
         username = input('Who writes ? (enter username) \n')
         if username not in [user.name for user in server.users] :
@@ -454,7 +504,7 @@ class Client :
                 self.see_messages(channel.id)
             else :
                 print(f'\nUnknown option : {choice} \n')
-                input('Press any key to see messages in channel {channel.}.')
+                input('Press <Enter> to see messages in channel {channel.}.')
                 self.see_messages(channel.id)
         else :
             user = server.name_to_user(username)
@@ -467,7 +517,7 @@ class Client :
                 self.see_messages(channel.id)
             else :
                 print(f'\nUnknown option : {choice} \n')
-                input('Press any key to go to main menu.')
+                input('Press <Enter> to go to main menu.')
                 self.main_menu()
         else :
             message = input('\nMessage : ')
