@@ -4,9 +4,9 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--server', '-s', help='enter json path')
+parser.add_argument('--server', '-s', help='enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json')
 args=parser.parse_args()
-print(f'server json: {args.server}')
+print(f'server json : {args.server}')
 
 # Définition des classes
 
@@ -58,6 +58,8 @@ class Message  :
         return {'id' : self.id, 'reception_date' : self.reception_date, 'sender_id' : self.sender_id, 'channel' : self.channel, 'content' : self.content}
 
 class Server :
+    SERVER_FILENAME = args.server
+
     def __init__(self, users : 'list[User]', channels : 'list[Channel]', messages : 'list[Message]') :
         self.users = users
         self.channels = channels
@@ -132,13 +134,13 @@ class Server :
         return server
 
     @classmethod
-    def load(cls, file : 'str' = 'C:/Users/Adrien/UE12/AP/Server-Messenger.json') -> 'Server' :
-        with open(file, 'r') as f :
+    def load(cls) -> 'Server' :
+        with open(cls.SERVER_FILENAME, 'r') as f :
             server = json.load(f)
         return cls.from_dict(server)
     
     def save(self) :
-        with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
+        with open(Server.SERVER_FILENAME, 'w') as f :
             json.dump(self.to_dict(), f)
     
     def to_dict(self) -> 'dict' :
