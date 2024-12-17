@@ -1,6 +1,12 @@
 from datetime import datetime
 import json
 import os
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--server', '-s', help='enter json path')
+args=parser.parse_args()
+print(f'server json: {args.server}')
 
 # Définition des classes
 
