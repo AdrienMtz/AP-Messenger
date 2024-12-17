@@ -7,6 +7,7 @@ parser.add_argument('--server', '-s', help='enter json path')
 args=parser.parse_args()
 print(f'server json: {args.server}')
 
+SERVER_NAME=args.server
 # Définition des classes
 
 class User :
@@ -122,13 +123,13 @@ class Server :
         return server
 
     @classmethod
-    def load(cls, file = 'C:/Users/Adrien/UE12/AP/Server-Messenger.json') -> 'Server' :
+    def load(cls, file:str) -> 'Server' :
         with open(file, 'r') as f :
             server = json.load(f)
         return cls.from_dict(server)
     
     def save(self):
-        with open('C:/Users/Adrien/UE12/AP/Server-Messenger.json', 'w') as f :
+        with open(SERVER_NAME, 'w') as f :
             json.dump(self.to_dict(), f)
     
     def to_dict(self) -> 'dict' :
@@ -378,7 +379,7 @@ class Client :
 
 
 print('=== Messenger ===')
-server = Server.load()
+server = Server.load(SERVER_NAME)
 client = Client(server)
 client.main_menu()
 
