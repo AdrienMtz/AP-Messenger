@@ -8,7 +8,7 @@ import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--server', '-s', help = 'enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json')
-parser.add_argument('--url', help = 'enter server url', default = 'http://vpscfefb063.vps.ovh.net/channels')
+parser.add_argument('--url', help = 'enter server url', default = 'http://127.0.0.1:5000')
 args = parser.parse_args()
 
 class RemoteServer :
@@ -19,19 +19,19 @@ class RemoteServer :
         return f'RemoteServer({self.url})'
 
     def get_users(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.users
+        users = requests.get(self.url + '/users')
+        
+        return users
 
     def get_channels(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.channels
+        channels = requests.get(self.url + '/channels')
+        
+        return channels
     
     def get_messages(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.messages
+        messages = requests.get(self.url + '/channels/$id/messages')
+
+        return messages
 
 
     def id_to_user(self, id : 'int') -> 'User' :
