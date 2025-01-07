@@ -1,42 +1,24 @@
-from server import Server
-from client import Client
 from model import User
 from model import Channel
 from model import Message
-import argparse
-import requests
+import json
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--server', '-s', help = 'enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json')
-parser.add_argument('--url', help = 'enter server url', default = 'http://vpscfefb063.vps.ovh.net/channels')
-args = parser.parse_args()
+class Server :
+    SERVER_FILENAME = args.server
 
-class RemoteServer :
-    def __init__(self, url : str):
-        self.url = url
+    def __init__(self, users : 'list[User]', channels : 'list[Channel]', messages : 'list[Message]') :
+        self.users = users
+        self.channels = channels
+        self.messages = messages
     
-    def __repr__(self) :
-        return f'RemoteServer({self.url})'
+    def __repr__(self) -> 'str' :
+        return f'Server(Users : {[(user.id, user.name) for user in self.users]}, Channels : {[(channel.id, channel.name) for channel in self.channels]}, Messages : {[(message.content, message.id) for message in self.messages]}'
 
-    def get_users(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.users
-
-    def get_channels(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.channels
-    
-    def get_messages(self) :
-        response = requests.get(self.url)
-        server = Server.from_dict(response.json())
-        return server.messages
-
+# Fonctions annexes
 
     def id_to_user(self, id : 'int') -> 'User' :
         L = []
-        for user in self.get_users() :
+        for user in self.users :
             if user.id == id :
                 L.append(user)
         if len(L) == 0 :
@@ -48,7 +30,7 @@ class RemoteServer :
 
     def id_to_channel(self, id : 'int') -> 'Channel' :
         L = []
-        for channel in self.get_channels() :
+        for channel in self.channels :
             if channel.id == id :
                 L.append(channel)
         if len(L) == 0 :
@@ -60,7 +42,7 @@ class RemoteServer :
 
     def name_to_user(self, name : 'str') -> 'User' :
         L = []
-        for user in self.get_users() :
+        for user in self.users :
             if user.name == name :
                 L.append(user)
         if len(L) == 0 :
@@ -72,7 +54,7 @@ class RemoteServer :
 
     def name_to_channel(self, name : 'str') -> 'Channel' :
         L = []
-        for channel in self.get_channels() :
+        for channel in self.channels :
             if channel.name == name :
                 L.append(channel)
         if len(L) == 0 :
@@ -108,14 +90,19 @@ class RemoteServer :
     
     def to_dict(self) -> 'dict' :
         server = {'users' : [], 'channels' : [], 'messages' : []}
-        for user in self.get_users() :
+        for user in self.users :
             server['users'].append(user.to_dict())
-        for channel in self.get_channels() :
+        for channel in self.channels :
             server['channels'].append(channel.to_dict())
-        for message in self.get_messages() :
+        for message in self.messages :
             server['messages'].append(message.to_dict())
         return server
 
-server = Server.load()
-client = Client(server)
-client.main_menu()
+    def get_users(self):
+        return self.users
+    
+    def get_channels(self):
+        return self.channels
+    
+    def get_messages(self):
+        return self.messages
