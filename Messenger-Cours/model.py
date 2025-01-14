@@ -29,11 +29,11 @@ class Channel :
         return {'id' : self.id, 'name' : self.name, 'member_ids' : self.member_ids}
 
 class Message  :
-    def __init__(self, id : int, reception_date : str, sender_id : int, channel : int, content : str) :
+    def __init__(self, id : int, reception_date : str, sender_id : int, channel_id : int, content : str) :
         self.id = id
         self.reception_date = reception_date
         self.sender_id = sender_id
-        self.channel = channel
+        self.channel = channel_id
         self.content = content
     
     def __repr__(self) -> 'str' :
