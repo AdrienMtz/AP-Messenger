@@ -7,14 +7,13 @@ from server import Server
 
 
 class RemoteServer(Server) :
-    def __init__(self, url : str):
+    def __init__(self, url : str) :
         self.url = url
     
-    def __repr__(self) :
+    def __repr__(self) -> 'str' :
         return f'RemoteServer({self.url})'
 
 # Fonctions utiles
-
     def id_to_user(self, id : 'int') -> 'User' :
         L = []
         for user in self.get_users() :
@@ -65,14 +64,14 @@ class RemoteServer(Server) :
 
 #Fonctionnalités de la classe
 
-    def get_users(self) :
+    def get_users(self) -> 'list[User]' :
         users_dict = requests.get(self.url + '/users').json()
         users = []
         for user_dict in users_dict :
             users.append(User(user_dict['id'], user_dict['name']))        
         return users
 
-    def get_channels(self) :
+    def get_channels(self) -> 'list[Channel]' :
         channels_dict = requests.get(self.url + '/channels').json()
         channels = []
         for channel_dict in channels_dict :
@@ -83,21 +82,21 @@ class RemoteServer(Server) :
             channels.append(Channel(channel_dict['id'], channel_dict['name'], channel_dict['member_ids'])) 
         return channels
     
-    def get_messages(self) :
+    def get_messages(self) -> 'list[Message]' :
         messages_dict = requests.get(self.url + '/messages').json()
         messages = []
         for message in messages_dict :
             messages.append(Message(message['id'], message['reception_date'], message['sender_id'], message['channel_id'], message['content']))   
         return messages
 
-    def post_user(self, name) :
+    def post_user(self, name : 'str') -> 'list' :
         response = requests.post(self.url + 'users/create', json = {"name" : name})
         if response.status_code < 300 :
             return [True, response.json()['id']]
         else :
             return [False, response]
     
-    def post_channel(self, channel_name):
+    def post_channel(self, channel_name : 'str') -> 'list' :
         response = requests.post(self.url + 'channels/create', json = {'name' : channel_name})
         if response.status_code>=300 :
             return [False, response]
@@ -109,14 +108,14 @@ class RemoteServer(Server) :
         else :
             return [True, user_id, channel_dict['id']]
 
-    def post_user_in_channel(self, channel_id, user_id) :
+    def post_user_in_channel(self, channel_id : 'int', user_id : 'int') :
         response = requests.post(self.url + f'/channels/{channel_id}/join', json = {'user_id' : user_id})
         if response.status_code < 300 :
             return True
         else :
             return response
 
-    def post_message(self, channel_id, sender_id, message) :
+    def post_message(self, channel_id : 'int', sender_id : 'int', message : 'str') :
         response = requests.post(self.url + f'/channels/{channel_id}/messages/post', json = {'sender_id' : sender_id, 'content' : message})
         if response.status_code < 300 :
             return True

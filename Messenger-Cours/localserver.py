@@ -1,4 +1,5 @@
 import json
+import colorama
 from datetime import datetime
 
 from model import User
@@ -16,7 +17,7 @@ class LocalServer(Server) :
         self.messages = server.messages
     
     def __repr__(self) -> 'str' :
-        return f'Server(Users : {[(user.id, user.name) for user in self.users]}, Channels : {[(channel.id, channel.name) for channel in self.channels]}, Messages : {[(message.content, message.id) for message in self.messages]}'
+        return f'LocalServer(Users : {[(user.id, user.name) for user in self.users]}, Channels : {[(channel.id, channel.name) for channel in self.channels]}, Messages : {[(message.content, message.id) for message in self.messages]}'
 
 # Fonctions annexes
 
@@ -82,23 +83,23 @@ class LocalServer(Server) :
             server['messages'].append(message.to_dict())
         return server
 
-    def get_users(self):
+    def get_users(self) -> 'list[User]' :
         return self.users
     
-    def get_channels(self):
+    def get_channels(self) -> 'list[Channel]' :
         return self.channels
     
-    def get_messages(self):
+    def get_messages(self) -> 'list[Message]' :
         return self.messages
 
-    def post_user(self, name):
+    def post_user(self, name : 'str') -> 'list' :
         user_id = max(user.id for user in self.users) + 1
         user = User(user_id, name)
         self.users.append(user)
         self.save()
         return [True, user_id]
 
-    def post_channel(self, channel_name) :
+    def post_channel(self, channel_name : 'str') -> list :
         member_ids = []
         choice = '0'
         size = 0
@@ -118,22 +119,22 @@ class LocalServer(Server) :
                     vide = False
                     break
                 else :
-                    print('\nPlease add a user to this channel.')
+                    print(f'\n{colorama.Fore.LIGHTRED_EX}Please add a user to this channel.{colorama.Style.RESET_ALL}')
             else :
-                print(f'Unknown option : {choice} \n')
+                print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
         channel = Channel(max(channel.id for channel in self.channels) + 1, channel_name, member_ids)
         self.channels.append(channel)
         self.save()
-        print(f'\nNew channel created : \n{channel.id}. {channel.name} : {Server.list_to_str(names)} \n')  
+        print(f'\n{colorama.Fore.LIGHTGREEN_EX}New channel created -> {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTGREEN_EX} : {Server.list_to_str(names, color_words = colorama.Fore.LIGHTCYAN_EX, color_commas = colorama.Fore.LIGHTGREEN_EX)} \n')  
         return [True]
 
-    def post_user_in_channel(self, channel_id, user_id):
+    def post_user_in_channel(self, channel_id : 'int', user_id : 'int') -> 'bool' :
         channel = self.id_to_channel(channel_id)
         channel.member_ids.append(user_id)
         self.save()
         return True
 
-    def post_message(self, channel_id, user_id, message):
+    def post_message(self, channel_id : 'int', user_id : 'int', message : 'str') -> 'bool' :
         self.messages.append(Message(max(message.id for message in self.messages) + 1, str(datetime.now()).split('.')[0], user_id, channel_id, message))
         self.save()
         return True

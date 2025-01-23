@@ -8,6 +8,8 @@ from server import Server
 class Client :
     def __init__(self, server : 'Server') :
         self.server = server
+        self.CLIENT_ID = None
+        self.LEAVE = False #Permet d'arrêter tous les programmes lorsque le client choisit de partir.
 
     def __repr__(self) -> 'str' :
         return f'Client({self.server})'
@@ -15,17 +17,22 @@ class Client :
 # Fonctions annexes
 
     @staticmethod
-    def first_index(L : 'list', e) :
-        for i in range(len(L)) :
-            if L[i] == e :
-                return i
+    def first_index(L : 'list', e) -> 'int':
+        for index, element in enumerate(L) :
+            if element == e :
+                return index
+        print(f'{colorama.Fore.LIGHTRED_EX}Error : {e} is not in {L}.{colorama.Style.RESET_ALL}\n')
+        return None
 
-    @staticmethod
-    def clear_screen() :
+    def clear_screen(self) :
+        server = self.server
         os.system('clear')
         print(f'{colorama.Fore.LIGHTGREEN_EX}¤========¤===========¤========¤')
         print(f'------>    {colorama.Fore.BLUE}MESSENGER{colorama.Fore.LIGHTGREEN_EX}    <------')
-        print('¤========¤===========¤========¤\n')
+        if self.CLIENT_ID != None :
+            client = server.id_to_user(self.CLIENT_ID)
+            print(f'{colorama.Fore.LIGHTYELLOW_EX}Connected as : {colorama.Style.RESET_ALL}{colorama.Fore.LIGHTCYAN_EX}{client.id}. {client.name}{colorama.Fore.LIGHTGREEN_EX}')
+        print('¤========¤===========¤========¤')
         print(colorama.Style.RESET_ALL)
 
 # Fonctionnalités de Messenger
@@ -34,26 +41,59 @@ class Client :
         self.clear_screen()
         print('a. See users')
         print('b. See channels')
-        print('c. Leave')
-        print('\n')
+        if self.CLIENT_ID == None :
+            print('c. Log in')
+        else :
+            print('c. Log out')
+        print('d. Leave\n')
         choice = input('Select an option : ')
         if choice == 'a' :
             self.see_users()
         elif choice == 'b' :
             self.see_channels()
         elif choice == 'c' :
+            if self.CLIENT_ID == None :
+                self.log_in()
+            else :
+                self.log_out()
+        elif choice == 'd' :
             self.clear_screen()
             print('Bye !\n')
+            self.LEAVE = True
         else :
-            print(f'Unknown option : {choice} \n')
+            print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
             input('Press <Enter> to go to main menu.')
             self.main_menu()
+
+    def log_in(self) :
+        self.clear_screen()
+        server = self.server
+        for user in server.get_users() :
+            print(f'{colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}\n{colorama.Style.RESET_ALL}')
+        client_id = int(input('\nPlease enter your user id.\n'))
+        if client_id not in [user.id for user in server.get_users()] :
+            print(f'\n{colorama.Fore.LIGHTRED_EX}No such user. \n{colorama.Style.RESET_ALL}')
+            input('Press <Enter> to go to main menu.')
+            self.main_menu()
+        else :
+            self.CLIENT_ID = client_id
+            user = server.id_to_user(client_id)
+            input(f'\nWelcome {colorama.Fore.LIGHTCYAN_EX}{user.name}{colorama.Style.RESET_ALL} !\n')
+            input('Press <Enter> to go to main menu.')
+            self.main_menu()
+
+    def log_out(self) :
+        self.CLIENT_ID = None
+        self.clear_screen()
+        print(f'{colorama.Fore.LIGHTGREEN_EX}You have logged out successfully.{colorama.Style.RESET_ALL}\n')
+        input('Press <Enter> to go to main menu.')
+        self.main_menu()
 
     def see_users(self) :
         self.clear_screen()
         server = self.server
         for user in server.get_users() :
-            print(f'{user.id}. {user.name}\n')
+            print(f'{colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}\n{colorama.Style.RESET_ALL}')
         print('a. Create user')
         print('b. Delete user')
         print('c. Back to main menu')
@@ -66,7 +106,7 @@ class Client :
         elif choice == 'c' :
             self.main_menu()
         else :
-            print(f'Unknown option : {choice} \n')
+            print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
             input('Press <Enter> to go to main menu.')
             self.main_menu()
 
@@ -75,15 +115,10 @@ class Client :
         server = self.server
         for channel in server.get_channels() :
             if len(channel.member_ids) == 0 :
-                print(f'{channel.id}. {channel.name} : No user in this channel. Please add a user to this channel or delete it. \n')
+                print(f'{colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL} : {colorama.Fore.LIGHTRED_EX}No user in this channel. Please add a user to this channel or delete it. {colorama.Style.RESET_ALL}\n')
             else : 
-                names = ''
-                for member_id in channel.member_ids :
-                    user = server.id_to_user(member_id)
-                    username = user.name
-                    names = names + username + ', '
-                names = names[ :-2] + '.'
-                print(f'{channel.id}. {channel.name} : {names}\n')
+                names = Server.list_to_str([server.id_to_user(member_id).name for member_id in channel.member_ids], color_words = colorama.Fore.LIGHTCYAN_EX)
+                print(f'{colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL} : {names}\n')
         print('a. See messages')
         print('b. Create new channel')
         print('c. Delete channel')
@@ -93,9 +128,9 @@ class Client :
         print('\n')
         choice = input('Select an option : ')
         if choice == 'a' :
-            channel_id = int(input('\nChannel id : '))
+            channel_id = int(input('\nIn which channel ? (id)\n'))
             if channel_id not in [channel.id for channel in server.get_channels()] :
-                print('\nNo such channel. \n')
+                print(f'\n{colorama.Fore.LIGHTRED_EX}No such channel. {colorama.Style.RESET_ALL}\n')
                 input('Press <Enter> to see channels.')
                 self.see_channels()
             else :
@@ -111,7 +146,7 @@ class Client :
         elif choice == 'f' :
             self.main_menu()
         else :
-            print(f'\nUnknown option : {choice} \n')
+            print(f'\n{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to go to main menu.')
             self.main_menu()
 
@@ -122,7 +157,7 @@ class Client :
         result = server.post_user(name)
         if result[0] == True :
             user_id = result[1]
-            print(f'New user created : {user_id}. {name}\n')
+            print(f'\n{colorama.Fore.LIGHTGREEN_EX}New user created successfully : {colorama.Fore.LIGHTCYAN_EX}{user_id}. {name}\n{colorama.Style.RESET_ALL}')
             print('a. See users')
             print('b. Back to main menu')
             print('\n')
@@ -132,11 +167,11 @@ class Client :
             elif choice == 'b' :
                 self.main_menu()
             else :
-                print(f'Unknown option : {choice} \n')
+                print(f'{colorama.Fore.LIGHTRED_EX}\nUnknown option : {choice} {colorama.Style.RESET_ALL}\n')
                 input('Press <Enter> to go to main menu.')
                 self.main_menu()
         else :
-            print(f'\nFailed to create user {name} on remote server ({server.url}) : {result[1]}.\n')
+            print(f'\n{colorama.Fore.LIGHTRED_EX}Failed to create user {name} on remote server ({server.url}) : {result[1]}.{colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to see users.')
             self.see_users()
 
@@ -145,18 +180,20 @@ class Client :
         server = self.server
         user_id = int(input('Which user do you want to delete ? (id) \n'))
         if user_id not in [user.id for user in server.get_users()] :
-            print('\nNo such user. \n')
+            print(f'\n{colorama.Fore.LIGHTRED_EX}No such user. {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to see users.')
             self.see_users()
         else :
             user = server.id_to_user(user_id)
-            choice = input(f'\nUser {user.id}. {user.name} will be deleted. Confirm ? (y/n) \n')
+            choice = input(f'\nUser {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Style.RESET_ALL} will be deleted. Confirm ? (y/n) \n')
             if choice == 'y' :
+                if user_id == self.CLIENT_ID :
+                    self.CLIENT_ID = None
                 user_index = self.first_index(server.get_users(), user)
                 server.get_users().pop(user_index)
                 server.save()
                 for channel in server.get_channels() :
-                    if user.id in channel.member_ids :
+                    while user.id in channel.member_ids :
                         channel.member_ids.pop(self.first_index(channel.member_ids, user.id))
                 messages2 = []
                 for message in server.get_messages() :
@@ -164,9 +201,9 @@ class Client :
                         messages2.append(message)
                 server.messages = messages2
                 self.clear_screen()
-                print(f'\nUser {user_id}. {user.name} deleted successfully. \n')
+                print(f'\n{colorama.Fore.LIGHTGREEN_EX}User {colorama.Fore.LIGHTCYAN_EX}{user_id}. {user.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
             elif choice != 'n' :
-                print(f'Unknown choice : {choice} \n')
+                print(f'{colorama.Fore.LIGHTRED_EX}Unknown choice : {choice} {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to see users.')
             self.see_users()
 
@@ -175,16 +212,16 @@ class Client :
         server = self.server
         channel = server.id_to_channel(channel_id) # Vérifié par see_channels
         if len(channel.member_ids) == 0 :
-            print(f'No user in channel {channel.id}. {channel.name}. Please delete this channel. \n')
+            print(f'{colorama.Fore.LIGHTRED_EX}No user in channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTRED_EX}. Please delete this channel. {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to go to main menu.')
             self.main_menu()
             return None
         messages = [message for message in server.get_messages() if message.channel == channel.id]
-        print(f'Channel {channel.id} : {channel.name} \n')
-        print(f'Members : {Server.list_to_str([server.id_to_user(member_id).name for member_id in channel.member_ids])} \n')
+        print(f'Channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}{colorama.Style.RESET_ALL} : {colorama.Fore.LIGHTBLUE_EX}{channel.name}{colorama.Style.RESET_ALL} \n')
+        print(f'Members : {Server.list_to_str([server.id_to_user(member_id).name for member_id in channel.member_ids], color_words = colorama.Fore.LIGHTCYAN_EX)} \n')
         for message in messages :
             user = server.id_to_user(message.sender_id)
-            print(f'({message.reception_date}) - {user.name} : {message.content}')
+            print(f'({message.reception_date}) - {colorama.Fore.LIGHTCYAN_EX}{user.name}{colorama.Style.RESET_ALL} : {message.content}')
         print('\n')
         print('a. See channels')
         print('b. Write a message')
@@ -198,7 +235,7 @@ class Client :
         elif choice == 'c' :
             self.main_menu()
         else :
-            print(f'Unknown option : {choice} \n')
+            print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to go to main menu.')
             self.main_menu()
 
@@ -208,34 +245,36 @@ class Client :
         channel_name = input('Channel name : ')
         result = server.post_channel(channel_name)
         if not result[0] :
-            if len(result) == 1 :
-                print('No such user.')
+            if len(result) == 1 : #Cas où un user ajouté au channel n'existe pas.
+                print(f'{colorama.Fore.LIGHTRED_EX}No such user.{colorama.Style.RESET_ALL}\n')
                 answer = input('Create new user ? (y/n) \n')
                 if answer == 'y' :
                     self.create_user()
                 elif answer != 'n' :
                     print(f'Unknown option : {answer} \n')
             else :
-                print(f'\nFailed to post channel on remote server ({server.url}) : {result[1]}.\n')
-        elif len(result) == 3 :
+                print(f'\n{colorama.Fore.LIGHTRED_EX}Failed to post channel on remote server ({server.url}) : {result[1]}.{colorama.Style.RESET_ALL}\n')
+        elif len(result) == 3 : 
             self.add_user(result[1], result[2])
         else :
             input('Press <Enter> to see channels.')
             self.see_channels()
 
-    def delete_channel(self, channel : 'Channel' = None, automatic : 'bool'= False) :
+    def delete_channel(self, channel : 'Channel' = None) :
         self.clear_screen()
         server = self.server
         choice = 'y'
-        if not automatic :
+        automatic = True
+        if channel == None :
+            automatic = False
             channel_id = int(input('Which channel do you want to delete ? (id) \n'))
             if channel_id not in [channel.id for channel in server.get_channels()] :
-                    print('No such channel.')
+                    print(f'\n{colorama.Fore.LIGHTRED_EX}No such channel.{colorama.Style.RESET_ALL}')
                     input('Press <Enter> to see channels.')
                     self.see_channels()
             else :
                 channel = server.id_to_channel(channel_id)
-                choice = input(f'\nChannel {channel.id}. {channel.name} will be deleted. Confirm ? (y/n) \n')
+                choice = input(f'\nChannel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL} will be deleted. Confirm ? (y/n) \n')
         if choice == 'y' :
             channel_index = self.first_index(server.get_channels(), channel)
             server.get_channels().pop(channel_index)
@@ -245,52 +284,56 @@ class Client :
                     messages2.append(message)
             server.messages = messages2 
             server.save()
-            print(f'\nChannel {channel.id} deleted successfully. \n')
+            print(f'\n{colorama.Fore.LIGHTGREEN_EX}Channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
         elif choice != 'n' :
-            print(f'Unknown choice: {choice} \n')
+            print(f'{colorama.Fore.LIGHTRED_EX}Unknown choice: {choice} {colorama.Style.RESET_ALL}\n')
         if not automatic :
             input('Press <Enter> to see channels.')
             self.see_channels()
 
-    def add_user(self, user_id = None, channel_id = None) :
+    def add_user(self, user_id : 'int' = None, channel_id : 'int' = None) :
         self.clear_screen()
         server = self.server
         if channel_id == None :
             channel_id = int(input('To which channel ? (id) \n'))
             if channel_id not in [channel.id for channel in server.get_channels()] :
-                        print('No such channel.')
+                        print(f'{colorama.Fore.LIGHTRED_EX}\nNo such channel id.{colorama.Style.RESET_ALL}\n')
                         answer = input('Create new channel ? (y/n) \n')
                         if answer == 'y' :
                             self.create_channel()
                         elif answer == 'n' :
                             self.add_user()
                         else :
-                            print(f'Unknown option : {answer} \n')
+                            print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {answer} \n{colorama.Style.RESET_ALL}')
                             input('Press <Enter> to add user.')
                             self.add_user()
         channel = server.id_to_channel(channel_id)
         if user_id == None :
             user_id = int(input('\nUser Id ? \n'))
         if user_id not in [user.id for user in server.get_users()] :
-            print('\nNo such user.')
+            print(f'\n{colorama.Fore.LIGHTRED_EX}No such user id.{colorama.Style.RESET_ALL}')
             answer = input('Create new user ? (y/n) \n')
             if answer == 'y' :
                 self.create_user()
             else :
                 if answer != 'n' :
-                    print(f'Unknown option : {answer} \n')
+                    print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {answer} \n{colorama.Style.RESET_ALL}')
                 input('\nPress <Enter> to see channels.')
                 self.see_channels()
-        else :
+        elif not self.LEAVE :
             user = server.id_to_user(user_id)
             if user.id in channel.member_ids :
-                print(f'User {user.id}. {user.name} is already in channel {channel.id}. {channel.name} \n')
-            result = server.post_user_in_channel(channel_id, user_id)
-            if result == True :
-                print(f'\nUser {user.id}. {user.name} has been added to channel {channel.id}. {channel.name} \n')
+                print(f'\nUser {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Style.RESET_ALL} is already in channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL} \n')
             else :
-                print(f'\nFailed to add user {user.id}. {user.name} to channel {channel.id}. {channel.name} on remote server ({server.url}) : {result}.\n')
-            input('Press <Enter> to see channels.')
+                result = server.post_user_in_channel(channel_id, user_id)
+                if result == True :
+                    print(f'\n{colorama.Fore.LIGHTGREEN_EX}User {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Fore.LIGHTGREEN_EX} has been added to channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name} \n{colorama.Style.RESET_ALL}')
+                    choice = input('Do you want to add another user to this channel ? (y/n) \n')
+                    if choice == 'y' :
+                        self.add_user(channel_id = channel.id)
+                else :
+                    print(f'\n{colorama.Fore.LIGHTRED_EX}Failed to add user {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Fore.LIGHTRED_EX} to channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTRED_EX} on remote server ({server.url}) : {result}.{colorama.Style.RESET_ALL}')
+            input('\nPress <Enter> to see channels.')
             self.see_channels()
 
     def remove_user(self) :
@@ -298,33 +341,35 @@ class Client :
         server = self.server
         channel_id = int(input('From which channel ? \n'))
         if channel_id not in [channel.id for channel in server.get_channels()] :
-            print('\nNo such channel. \n')
+            print(f'\n{colorama.Fore.LIGHTRED_EX}No such channel. \n{colorama.Style.RESET_ALL}')
             input('Press <Enter> to see channels.')
             self.see_channels()
         else :
             channel = server.id_to_channel(channel_id)
             user_id = int(input('\nUser Id ? \n'))
+            if user_id not in [user.id for user in server.users] :
+                print(f'{colorama.Fore.LIGHTRED_EX}No such user.{colorama.Style.RESET_ALL}')
+            user = server.id_to_user(user_id)
             if user_id not in channel.member_ids :
-                print(f'\nUser {user_id} is not in channel {channel.id}. \n')
+                print(f'\n{colorama.Fore.LIGHTRED_EX}User {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Fore.LIGHTRED_EX} is not in channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name} \n{colorama.Style.RESET_ALL}')
             else :
-                user = server.id_to_user(user_id)
-                choice = input(f'\nUser {user.id}. {user.name} will be removed from channel {channel.id}. {channel.name}. Confirm ? (y/n) \n')
+                choice = input(f'\nUser {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Style.RESET_ALL} will be removed from channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL}. Confirm ? (y/n) \n')
                 if choice == 'y' :
                     answer = '' # Permet de savoir s'il faut supprimer le channel.
                     if len(channel.member_ids) == 1 :
-                        answer = input(f'\nChannel {channel.id}. {channel.name} will be deleted. Confirm ? (y/n) \n')
+                        answer = input(f'\nChannel {channel.id}. {colorama.Fore.LIGHTBLUE_EX}{channel.name}{colorama.Style.RESET_ALL} will be deleted. Confirm ? (y/n) \n')
                         if answer not in ['y', 'n'] :
-                            print(f'\nUnknown option : {answer} \n')
+                            print(f'\n{colorama.Fore.LIGHTRED_EX}Unknown option : {answer} \n{colorama.Style.RESET_ALL}')
                         if answer != 'y' :
                             input('\nPress <Enter> to see channels.')
                             self.see_channels()
                             return None
                     channel.member_ids.pop(self.first_index(channel.member_ids, user.id))
-                    print(f'\nUser {user.id} has been removed from channel {channel.id}. \n')
+                    print(f'\n{colorama.Fore.LIGHTGREEN_EX}User {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Fore.LIGHTGREEN_EX} has been removed from channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL}.')
                     if answer == 'y' :
                         self.delete_channel(channel, automatic = True)
                 elif choice != 'n' :
-                    print(f'\nUnknown option : {choice} \n')
+                    print(f'\n{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
             server.save()
             input('\nPress <Enter> to see channels.')
             self.see_channels()
@@ -333,42 +378,31 @@ class Client :
         self.clear_screen()
         server = self.server
         channel = server.id_to_channel(channel_id) # Vérifié par see_messages()
-        print(f'Message to channel {channel.id} : {channel.name} \n')
-        user_id = int(input('Who writes ? (enter user id) \n'))
-        if user_id not in [user.id for user in server.get_users()] :
-            print('\nNo such user. \n')
-            choice = input('Do you want to see users ? (y/n) \n')
-            if choice == 'y' :
-                self.see_users()
-                return None
-            elif choice == 'n' :
-                self.see_messages(channel.id)
-                return None
-            else :
-                print(f'\nUnknown option : {choice} \n')
-                input('Press <Enter> to see messages in channel {channel.}.')
-                self.see_messages(channel.id)
-                return None
+        if self.CLIENT_ID == None :
+            print('\nPlease log in first.')
+            input('\nPress <Enter> to log in.')
+            self.log_in()
         else :
-            user = server.id_to_user(user_id)
+            user = server.id_to_user(self.CLIENT_ID)
         if user.id not in channel.member_ids :
-            print(f'User {user.id}. {user.name} is not in channel {channel.id} : {channel.name}.')
+            print(f'{colorama.Fore.LIGHTRED_EX}User {colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}{colorama.Fore.LIGHTRED_EX} is not in channel {colorama.Fore.LIGHTBLUE_EX}{channel.id} : {channel.name}{colorama.Fore.LIGHTRED_EX}. \n{colorama.Style.RESET_ALL}')
             choice = input('Do you want to add this user to this channel ? (y/n) \n')
             if choice == 'y' :
-                self.add_user(user.id)
+                self.add_user(user.id, channel.id)
             elif choice == 'n' :
                 self.see_messages(channel.id)
             else :
-                print(f'\nUnknown option : {choice} \n')
+                print(f'\n{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
                 input('Press <Enter> to go to main menu.')
                 self.main_menu()
         else :
+            print(f'Message to channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}{colorama.Style.RESET_ALL} : {colorama.Fore.LIGHTBLUE_EX}{channel.name}{colorama.Style.RESET_ALL}\n')
             message = input('\nMessage : ')
             result = server.post_message(channel.id, user.id, message)
             if result == True :
                 self.see_messages(channel.id)
             else :
-                print(f'\nFailed to post message on remote server ({server.url}) : {result}.\n')
-                input(f'Press <Enter> to see messages in channel {channel.id}.')
+                print(f'\n{colorama.Fore.LIGHTRED_EX}Failed to post message on remote server ({server.url}) : {result}.\n{colorama.Style.RESET_ALL}')
+                input(f'Press <Enter> to see messages in channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}.{colorama.Style.RESET_ALL}')
                 self.see_messages(channel.id)
 
