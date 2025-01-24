@@ -10,7 +10,7 @@ from client import Client
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--filename', '-f', help = 'enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json' ) # 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json'
+parser.add_argument('--filename', '-f', help = 'enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json') # 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json'
 parser.add_argument('--url', '-u', help = 'enter server url', default = 'https://groupe5-python-mines.fr')
 parser.add_argument('--portail', '-p', action = 'store_true')
 args = parser.parse_args()

@@ -18,6 +18,15 @@ class Server :
         res = res[ :-2] + color_commas + '.' + colorama.Style.RESET_ALL
         return res
 
+    @staticmethod
+    def test_int(input : 'str') :
+        if len(input) == 0 :
+            return False
+        for character in input :
+            if character not in [f'{i}' for i in range(10)] :
+                return False
+        return True
+
     @classmethod
     def from_dict(cls, server_dict : 'dict') -> 'Server' :
         users = []
@@ -38,6 +47,9 @@ class Server :
             server = json.load(f)
         return cls.from_dict(server)
 
+    @classmethod
+    def save(self) :
+        pass
     # Fonctions utiles
 
     def id_to_user(self, id : 'int') -> 'User' :
@@ -69,7 +81,7 @@ class Server :
     def post_channel(self, channel_name : 'str') -> 'list' :
         pass
 
-    def post_user_in_channel(self, channel_id : 'int', user_id : 'int') : #LocalServer : renvoie un 'bool' ; RemoteServer : renvoie un 'bool' ou une 
+    def post_user_in_channel(self, channel_id : 'int', user_id : 'int') : #LocalServer : renvoie un 'bool' ; RemoteServer : renvoie un 'bool' ou une 'requests.models.Response'
         pass
 
     def post_message(self, channel_id : 'int', sender_id : 'int', message : 'str') :

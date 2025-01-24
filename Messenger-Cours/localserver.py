@@ -108,7 +108,12 @@ class LocalServer(Server) :
         while choice != 'n' or vide:
             choice = input('\nDo you want to add a new user to this channel ? (y/n) \n')
             if choice == 'y' :
-                user_id = int(input('\nUser Id : \n'))
+                user_id_str = input('\nUser id :\n')
+                while not Server.test_int(user_id_str) :
+                    self.clear_screen()
+                    print(f'{colorama.Fore.LIGHTRED_EX}Please enter an integer.{colorama.Style.RESET_ALL}')
+                    user_id_str = input('\nUser id :\n')
+                user_id = int(user_id_str)
                 if user_id not in [user.id for user in self.users] :
                     return [False]
                 member_ids.append(user_id)
@@ -121,7 +126,7 @@ class LocalServer(Server) :
                 else :
                     print(f'\n{colorama.Fore.LIGHTRED_EX}Please add a user to this channel.{colorama.Style.RESET_ALL}')
             else :
-                print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice} \n{colorama.Style.RESET_ALL}')
+                print(f'{colorama.Fore.LIGHTRED_EX}Unknown option : {choice}{colorama.Style.RESET_ALL}')
         channel = Channel(max(channel.id for channel in self.channels) + 1, channel_name, member_ids)
         self.channels.append(channel)
         self.save()

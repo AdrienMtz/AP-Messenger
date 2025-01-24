@@ -1,4 +1,4 @@
-import requests
+import requests, colorama
 
 from model import User
 from model import Channel
@@ -102,7 +102,11 @@ class RemoteServer(Server) :
             return [False, response]
         channel_dict = response.json()
         print(f'\nNew channel created : \n{channel_dict['id']}. {channel_dict['name']}.\n')
-        user_id = int(input('\nWhich user do you want to add to this channel ? (id) \n'))
+        user_id_str = input('\nWhich user do you want to add to this channel ? (id) \n')
+        while not Server.test_int(user_id_str) :
+            print(f'{colorama.Fore.LIGHTRED_EX}Please enter an integer.{colorama.Style.RESET_ALL}')
+            user_id_str = input('\nWhich user do you want to add to this channel ? (id) \n')
+        user_id = int(user_id_str)
         if user_id not in [user.id for user in self.get_users()] :
             return [False]
         else :
