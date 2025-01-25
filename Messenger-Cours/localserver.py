@@ -6,6 +6,7 @@ from model import User
 from model import Channel
 from model import Message
 from server import Server
+from client import Client
 
 
 class LocalServer(Server) :
@@ -99,7 +100,7 @@ class LocalServer(Server) :
         self.save()
         return [True, user_id]
 
-    def post_channel(self, channel_name : 'str') -> list :
+    def post_channel(self, channel_name : 'str', client : 'Client') -> 'list' :
         member_ids = []
         choice = '0'
         size = 0
@@ -110,7 +111,7 @@ class LocalServer(Server) :
             if choice == 'y' :
                 user_id_str = input('\nUser id :\n')
                 while not Server.test_int(user_id_str) :
-                    self.clear_screen()
+                    client.clear_screen()
                     print(f'{colorama.Fore.LIGHTRED_EX}Please enter an integer.{colorama.Style.RESET_ALL}')
                     user_id_str = input('\nUser id :\n')
                 user_id = int(user_id_str)

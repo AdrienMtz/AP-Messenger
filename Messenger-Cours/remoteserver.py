@@ -4,6 +4,7 @@ from model import User
 from model import Channel
 from model import Message
 from server import Server
+from client import Client
 
 
 class RemoteServer(Server) :
@@ -96,14 +97,15 @@ class RemoteServer(Server) :
         else :
             return [False, response]
     
-    def post_channel(self, channel_name : 'str') -> 'list' :
-        response = requests.post(self.url + 'channels/create', json = {'name' : channel_name})
+    def post_channel(self, channel_name : 'str', client : 'Client') -> 'list' :
+        response = requests.post(self.url + '/channels/create', json = {'name' : channel_name})
         if response.status_code>=300 :
             return [False, response]
         channel_dict = response.json()
-        print(f'\nNew channel created : \n{channel_dict['id']}. {channel_dict['name']}.\n')
+        print(f'\nNew channel created : \n{colorama.Fore.LIGHTBLUE_EX}{channel_dict['id']}. {channel_dict['name']}{colorama.Style.RESET_ALL}.\n')
         user_id_str = input('\nWhich user do you want to add to this channel ? (id) \n')
         while not Server.test_int(user_id_str) :
+            client.clear_screen()
             print(f'{colorama.Fore.LIGHTRED_EX}Please enter an integer.{colorama.Style.RESET_ALL}')
             user_id_str = input('\nWhich user do you want to add to this channel ? (id) \n')
         user_id = int(user_id_str)

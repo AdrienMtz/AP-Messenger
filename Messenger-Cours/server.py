@@ -3,7 +3,6 @@ import colorama
 
 from model import User, Channel, Message
 
-
 class Server :
     def __init__(self, users : 'list[User]', channels : 'list[Channel]', messages : 'list[Message]') :
         self.users = users
@@ -78,7 +77,7 @@ class Server :
     def post_user(self, name : 'str') -> 'list' :
         pass
     
-    def post_channel(self, channel_name : 'str') -> 'list' :
+    def post_channel(self, channel_name : 'str', client) -> 'list' :
         pass
 
     def post_user_in_channel(self, channel_id : 'int', user_id : 'int') : #LocalServer : renvoie un 'bool' ; RemoteServer : renvoie un 'bool' ou une 'requests.models.Response'

@@ -10,7 +10,7 @@ from client import Client
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--filename', '-f', help = 'enter json path', default = 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json') # 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json'
+parser.add_argument('--filename', '-f', help = 'enter json path', default = None) # 'C:/Users/Adrien/UE12/AP/Messenger-Cours/Server-Messenger.json'
 parser.add_argument('--url', '-u', help = 'enter server url', default = 'https://groupe5-python-mines.fr')
 parser.add_argument('--portail', '-p', action = 'store_true')
 args = parser.parse_args()
@@ -25,8 +25,6 @@ elif args.portail is not None :
 else :
     print(f'{colorama.Fore.LIGHTRED_EX}Error: -f or -u should be set.{colorama.Style.RESET_ALL}')
     exit(-1)
-
-
 
 
 client = Client(server)
