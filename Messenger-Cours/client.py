@@ -228,7 +228,7 @@ class Client :
                 server.messages = messages2
                 server.save()
                 self.clear_screen()
-                print(f'\n{colorama.Fore.LIGHTGREEN_EX}User {colorama.Fore.LIGHTCYAN_EX}{user_id}. {user.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
+                print(f'{colorama.Fore.LIGHTGREEN_EX}User {colorama.Fore.LIGHTCYAN_EX}{user_id}. {user.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
             elif choice != 'n' :
                 print(f'{colorama.Fore.LIGHTRED_EX}Unknown choice : {choice} {colorama.Style.RESET_ALL}\n')
             input('Press <Enter> to see users.')
@@ -317,7 +317,8 @@ class Client :
                     messages2.append(message)
             server.messages = messages2 
             server.save()
-            print(f'\n{colorama.Fore.LIGHTGREEN_EX}Channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
+            self.clear_screen()
+            print(f'{colorama.Fore.LIGHTGREEN_EX}Channel {colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Fore.LIGHTGREEN_EX} deleted successfully. \n{colorama.Style.RESET_ALL}')
         elif choice != 'n' :
             print(f'{colorama.Fore.LIGHTRED_EX}Unknown choice: {choice} {colorama.Style.RESET_ALL}\n')
         if not automatic :
@@ -408,7 +409,7 @@ class Client :
                 print(f'{colorama.Fore.LIGHTRED_EX}Please enter an integer.{colorama.Style.RESET_ALL}')
                 user_id_str = input('\nUser id ?\n')
             user_id = int(user_id_str)
-            if user_id not in [user.id for user in server.users] :
+            if user_id not in [user.id for user in server.get_users()] :
                 print(f'{colorama.Fore.LIGHTRED_EX}No such user.{colorama.Style.RESET_ALL}')
             user = server.id_to_user(user_id)
             if user_id not in channel.member_ids :
