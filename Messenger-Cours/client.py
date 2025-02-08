@@ -6,10 +6,11 @@ from server import Server
 
 
 class Client :
-    def __init__(self, server : 'Server') :
+    def __init__(self, server : 'Server', local : 'bool') :
         self.server = server
         self.CLIENT_ID = None
         self.LEAVE = False #Permet d'arrêter tous les programmes lorsque le client choisit de partir.
+        self.LOCAL = local
 
     def __repr__(self) -> 'str' :
         return f'Client({self.server})'
@@ -102,13 +103,14 @@ class Client :
         for user in server.get_users() :
             print(f'{colorama.Fore.LIGHTCYAN_EX}{user.id}. {user.name}\n{colorama.Style.RESET_ALL}')
         print('a. Create user')
-        print('b. Delete user')
+        if self.LOCAL :
+            print('b. Delete user')
         print('m. Back to main menu')
         print('\n')
         choice = input('Select an option : ')
         if choice == 'a' :
             self.create_user()
-        elif choice == 'b' :
+        elif choice == 'b' and self.LOCAL :
             self.delete_user()
         elif choice == 'm' :
             self.main_menu()
@@ -128,9 +130,11 @@ class Client :
                 print(f'{colorama.Fore.LIGHTBLUE_EX}{channel.id}. {channel.name}{colorama.Style.RESET_ALL} : {names}\n')
         print('a. See messages')
         print('b. Create new channel')
-        print('c. Delete channel')
+        if self.LOCAL :
+            print('c. Delete channel')
         print('d. Add user to channel')
-        print('e. Remove user from channel')
+        if self.LOCAL :
+            print('e. Remove user from channel')
         print('m. Back to main menu')
         print('\n')
         choice = input('Select an option : ')
@@ -149,11 +153,11 @@ class Client :
                 self.see_messages(channel_id)
         elif choice == 'b' :
             self.create_channel()
-        elif choice == 'c' :
+        elif choice == 'c' and self.LOCAL :
             self.delete_channel()
         elif choice == 'd' :
             self.add_user()
-        elif choice == 'e' :
+        elif choice == 'e' and self.LOCAL:
             self.remove_user()
         elif choice == 'm' :
             self.main_menu()

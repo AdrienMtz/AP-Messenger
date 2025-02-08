@@ -26,6 +26,7 @@ else :
     print(f'{colorama.Fore.LIGHTRED_EX}Error: -f or -u should be set.{colorama.Style.RESET_ALL}')
     exit(-1)
 
+local = type(server) == LocalServer
 
-client = Client(server)
+client = Client(server, local)
 client.main_menu()
