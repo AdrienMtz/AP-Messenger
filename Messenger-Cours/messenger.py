@@ -17,7 +17,10 @@ args = parser.parse_args()
 
 server : Server
 if args.filename is not None :
-    server = LocalServer(args.filename)
+    # Votre fonction LocalServer est un constructeur, autant l'appeler tout de suite
+    # plutôt que de créer un objet LocalServer dans votre constructeur
+    # pour ensuite copier ses données vers le nouvel objet
+    server = LocalServer.load(args.filename)
 elif args.url is not None :
     server = RemoteServer(args.url)
 elif args.portail is not None :

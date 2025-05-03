@@ -10,13 +10,12 @@ from client import Client
 
 
 class LocalServer(Server) :
-    def __init__(self, server_filename : 'str') :
+    def __init__(self, users : 'list[User]', channels : 'list[Channel]', messages : 'list[Message]', server_filename: str) :
+        self.users = users
+        self.channels = channels
+        self.messages = messages
         self.server_filename = server_filename
-        server = Server.load(server_filename)
-        self.users = server.users
-        self.channels = server.channels
-        self.messages = server.messages
-    
+
     def __repr__(self) -> 'str' :
         return f'LocalServer(Users : {[(user.id, user.name) for user in self.users]}, Channels : {[(channel.id, channel.name) for channel in self.channels]}, Messages : {[(message.content, message.id) for message in self.messages]}'
 
@@ -69,11 +68,31 @@ class LocalServer(Server) :
             print(f'Error : 2 ids for name {name}')
         else :
             return L[0]
-    
-    def save(self) :
+
+    @classmethod
+    def from_dict(cls, server_dict : 'dict', server_filename: str) -> 'LocalServer' :
+        users = []
+        channels = []
+        messages = []
+        for user in server_dict['users'] :
+            users.append(User(user['id'], user['name']))
+        for channel in server_dict['channels'] :
+            channels.append(Channel(channel['id'], channel['name'], channel['member_ids']))
+        for message in server_dict['messages'] :
+            messages.append(Message(message['id'], message['reception_date'], message['sender_id'], message['channel'], message['content']))
+        server = cls(users, channels, messages, server_filename)
+        return server
+
+    @classmethod
+    def load(cls, server_filename) -> 'LocalServer' :
+        with open(server_filename, 'r') as f :
+            server = json.load(f)
+        return cls.from_dict(server, server_filename)
+
+    def save(self) -> None:
         with open(self.server_filename, 'w') as f :
             json.dump(self.to_dict(), f)
-    
+
     def to_dict(self) -> 'dict' :
         server = {'users' : [], 'channels' : [], 'messages' : []}
         for user in self.users :
@@ -98,6 +117,9 @@ class LocalServer(Server) :
         user = User(user_id, name)
         self.users.append(user)
         self.save()
+        # Renvoyer 2 résultats sous forme de liste est peu clair. Vous avez 2 meilleures solutions :
+        # - renvoyer une instance d'une dataclass qui contient 2 attributs explicites
+        # - renvoyer uniquement la valeur user_id en cas de succès, et lancer une exception en cas d'échec. Charge aux fonctions appelantes de gérer cette exception.
         return [True, user_id]
 
     def post_channel(self, channel_name : 'str', client : 'Client') -> 'list' :
@@ -117,6 +139,8 @@ class LocalServer(Server) :
                 user_id = int(user_id_str)
                 if user_id not in [user.id for user in self.users] :
                     return [False]
+                # Plutôt que de stocker les ids d'un côté et les noms de l'autres, vous devriez stocker les objets "User" directement.
+                # Ca vous évitera une éventuelle désynchronisation des contenus des listes lors de modifications futures.
                 member_ids.append(user_id)
                 names.append(self.id_to_user(user_id).name)
                 size += 1

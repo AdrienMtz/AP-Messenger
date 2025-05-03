@@ -4,21 +4,35 @@ import colorama
 from model import User, Channel, Message
 
 class Server :
-    def __init__(self, users : 'list[User]', channels : 'list[Channel]', messages : 'list[Message]') :
-        self.users = users
-        self.channels = channels
-        self.messages = messages
+    # Pas besoin de déclarer __init__. Vous n'avez besoin
+    # de déclarer que les fonctions qui sont appelées explicitement
+    # sur des Server. Par ailleurs, cette forme n'est pas générique :
+    # prendre des users, channels, et messages en paramètre
+    # du constructeur n'a de sens que pour LocalServer.
 
+    # Il vaut mieux éviter les noms de variables d'une seule lettre.
+    # Par ailleurs, on réserve par convention les noms en majuscules
+    # aux constantes (comme RESET_ALL ci-dessous).
     @staticmethod
-    def list_to_str(L : 'list[str]', color_words : 'str' = '', color_commas : 'str' = colorama.Style.RESET_ALL) -> 'str' :
+    def list_to_str(word_list : 'list[str]', color_words : 'str' = '', color_commas : 'str' = colorama.Style.RESET_ALL) -> 'str' :
+        '''Le nom de cette fonction est assez générique.
+
+        Si vous n'avez pas de nom plus précis en tête,
+        vous pouvez expliquer son objectif en une ligne
+        et documenter son fonctionnement comme ceci.
+
+        Ce commentaire est reconnu par les IDE, qui l'afficheront lors
+        d'un survol du nom de la fonction.
+        '''
         res = ''
-        for word in L :
+        for word in word_list:
             res = res + color_words + word + color_commas + ', '
         res = res[ :-2] + color_commas + '.' + colorama.Style.RESET_ALL
         return res
 
     @staticmethod
     def test_int(input : 'str') :
+        # Il y a déjà une fonction pour ça : https://docs.python.org/3/library/stdtypes.html#str.isdigit
         if len(input) == 0 :
             return False
         for character in input :
@@ -26,62 +40,50 @@ class Server :
                 return False
         return True
 
-    @classmethod
-    def from_dict(cls, server_dict : 'dict') -> 'Server' :
-        users = []
-        channels = []
-        messages = []
-        for user in server_dict['users'] :
-            users.append(User(user['id'], user['name']))
-        for channel in server_dict['channels'] :
-            channels.append(Channel(channel['id'], channel['name'], channel['member_ids']))
-        for message in server_dict['messages'] :
-            messages.append(Message(message['id'], message['reception_date'], message['sender_id'], message['channel'], message['content']))
-        server = cls(users, channels, messages)
-        return server
+    # Les fonctions `from_dict` et `load` n'ont de sens que pour un LocalServer
 
     @classmethod
-    def load(cls, server_filename) -> 'Server' :
-        with open(server_filename, 'r') as f :
-            server = json.load(f)
-        return cls.from_dict(server)
-
-    @classmethod
-    def save(self) :
-        pass
+    def save(self) -> None:
+        raise NotImplementedError()
     # Fonctions utiles
 
-    def id_to_user(self, id : 'int') -> 'User' :
-        pass
+    def id_to_user(self, id : 'int') -> 'User':
+        # Nous n'avons pas vu les exceptions en cours,
+        # mais elles permettent de remonter des erreurs d'exécutions.
+        # Ici ce code n'est pas censé être atteint, car la fonction
+        # sera toujours appelée sur une sous-classe qui la redéfinira.
+        # Si on oublie de la redéfinir, l'erreur sera assez explicite
+        # (Not implemented)
+        raise NotImplementedError()
 
     def id_to_channel(self, id : 'int') -> 'Channel' :
-        pass
+        raise NotImplementedError()
 
     def name_to_user(self, name : 'str') -> 'User' :
-        pass
+        raise NotImplementedError()
 
     def name_to_channel(self, name : 'str') -> 'Channel' :
-        pass
+        raise NotImplementedError()
 
 #Fonctionnalités de la classe
 
     def get_users(self) -> 'list[User]' :
-        pass
+        raise NotImplementedError()
 
     def get_channels(self) -> 'list[Channel]' :
-        pass
+        raise NotImplementedError()
     
     def get_messages(self) -> 'list[Message]' :
-        pass
+        raise NotImplementedError()
 
     def post_user(self, name : 'str') -> 'list' :
-        pass
+        raise NotImplementedError()
     
     def post_channel(self, channel_name : 'str', client) -> 'list' :
-        pass
+        raise NotImplementedError()
 
     def post_user_in_channel(self, channel_id : 'int', user_id : 'int') : #LocalServer : renvoie un 'bool' ; RemoteServer : renvoie un 'bool' ou une 'requests.models.Response'
-        pass
+        raise NotImplementedError()
 
     def post_message(self, channel_id : 'int', sender_id : 'int', message : 'str') :
-        pass
+        raise NotImplementedError()

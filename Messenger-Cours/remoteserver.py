@@ -15,6 +15,10 @@ class RemoteServer(Server) :
         return f'RemoteServer({self.url})'
 
 # Fonctions utiles
+    # Toutes ces fonctions pourraient être mutualisées au niveau de la
+    # classe mère Server.
+    # Ca vous permettrait de les modifier plus facilement, si vous
+    # vouliez afficher les erreurs d'une façon différente par exemple.
     def id_to_user(self, id : 'int') -> 'User' :
         L = []
         for user in self.get_users() :
@@ -102,6 +106,15 @@ class RemoteServer(Server) :
         if response.status_code>=300 :
             return [False, response]
         channel_dict = response.json()
+
+        # Il y a des duplications et quelques différences avec
+        # la version de LocalServer. Vous pourriez simplifier
+        # en mettant tous les `input` dans la classe Client,
+        # et en n'appelant la classe Server que lorsque c'est nécessaire.
+        # Ca vous permettrait également de ne pas faire dépendre les fonctions
+        # des classes Server de la classe Client, et donc de pouvoir
+        # plus facilement développer d'autres clients (une interface graphique
+        # par exemple).
         print(f'\nNew channel created : \n{colorama.Fore.LIGHTBLUE_EX}{channel_dict['id']}. {channel_dict['name']}{colorama.Style.RESET_ALL}.\n')
         user_id_str = input('\nWhich user do you want to add to this channel ? (id) \n')
         while not Server.test_int(user_id_str) :

@@ -31,6 +31,8 @@ class Channel :
 class Message  :
     def __init__(self, id : int, reception_date : str, sender_id : int, channel_id : int, content : str) :
         self.id = id
+        # Il vaut mieux stocker les date comme des objets datetime, et gérer les conversions à l'initialisation de l'objet puis à l'impression.
+        # Ca vous permettra de gérer plus facilement des détails comme des arrondis, des formats différents (US par exemple), des changements de fuseaux horaire...
         self.reception_date = reception_date
         self.sender_id = sender_id
         self.channel = channel_id
